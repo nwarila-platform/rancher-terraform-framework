@@ -1,6 +1,6 @@
 # Documentation
 
-Documentation for this template follows the [Diátaxis framework](https://diataxis.fr/).
+Documentation for this Terraform framework follows the [Diataxis framework](https://diataxis.fr/).
 
 | Quadrant | Path | Purpose |
 | --- | --- | --- |

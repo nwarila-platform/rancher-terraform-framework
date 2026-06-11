@@ -32,6 +32,17 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  release-disabled:
+    name: Release disabled
+    if: ${{ github.event_name == 'push' && vars.RELEASE_PLEASE_ON_PUSH != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+    steps:
+      - name: Explain disabled release push path
+        run: echo "release-please on push is disabled; set RELEASE_PLEASE_ON_PUSH=true to enable it."
+
   release-please:
     name: Release Please
     # Push-triggered release-please needs the repository setting that allows
@@ -43,7 +54,7 @@ jobs:
       pull-requests: write # required for release-please to open and update release PRs
       issues: write # required for release-please issue and label bookkeeping
       actions: write # required to dispatch release-evidence after publishing a release
-    uses: NWarila/.github/.github/workflows/reusable-release-please.yaml@19a4c98f404039292bb4a74c60602f3229539958 # NWarila/.github main @ 2026-06-04
+    uses: nwarila-platform/.github/.github/workflows/reusable-release-please.yaml@0d2a0752d4c618907d735af4a7c12a9214c8517e # nwarila-platform/.github main @ 2026-06-11
 
   evidence:
     name: Release Evidence

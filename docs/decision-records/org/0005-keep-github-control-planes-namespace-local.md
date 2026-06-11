@@ -1,8 +1,8 @@
-# ADR-0006: Keep GitHub Control Planes Namespace-Local
+# ADR-0005: Keep GitHub Control Planes Namespace-Local
 
 | Field            | Value                                                                       |
 | ---------------- | --------------------------------------------------------------------------- |
-| ID               | ADR-0006                                                                    |
+| ID               | ADR-0005                                                                    |
 | Scope            | Org baseline                                                                |
 | Status           | Accepted                                                                    |
 | Decision-subject | Namespace-local ownership for GitHub control-plane governance.              |
@@ -12,13 +12,13 @@
 | Authors          | Nick Warila (@NWarila)                                                      |
 | Decision-makers  | Nick Warila (sole portfolio maintainer)                                     |
 | Consulted        | CI findings from repo-hygiene, ADR drift, and reusable workflow rollout.    |
-| Informed         | Maintainers of adopting repositories under `NWarila`.                       |
+| Informed         | Maintainers of adopting repositories under `nwarila-platform`.              |
 | Reversibility    | Medium                                                                      |
 | Review-by        | 2026-11-29                                                                  |
 
 ## TL;DR
 
-Repositories under `NWarila` use `NWarila/.github` as their org control plane for org-baseline ADRs, community-health files, org repo-hygiene policy, and reusable workflow callers. Repositories under another namespace, including `nwarila-platform`, use that namespace's own `.github` repository for the same control-plane concerns. Cross-namespace dependencies remain allowed for type-template repositories and explicit tools, but not for org governance that should be owned by the consuming repository's namespace.
+Repositories under `nwarila-platform` use `nwarila-platform/.github` as their org control plane for org-baseline ADRs, community-health files, org repo-hygiene policy, and reusable workflow callers. Repositories under another namespace, including `NWarila`, use that namespace's own `.github` repository for the same control-plane concerns. Cross-namespace dependencies remain allowed for type-template repositories and explicit tools, but not for org governance that should be owned by the consuming repository's namespace.
 
 ## Context and Problem Statement
 
@@ -28,7 +28,7 @@ Before this decision was written down, some `nwarila-platform/*` repositories ca
 
 The same ambiguity appeared in drift-gate manifests. Files such as workflow callers and mirroring documentation have the same shape across templates, but their org-control-plane references must differ by namespace. Treating those files as byte-identical across namespaces makes the automated drift check fight the intended trust boundary.
 
-The portfolio needs a clear rule that keeps org governance local to the namespace while still allowing cross-namespace reuse of type-template assets where that is the deliberate architecture.
+The platform namespace needs a clear rule that keeps org governance local while still allowing cross-namespace reuse of type-template assets where that is the deliberate architecture.
 
 ## Decision Drivers
 
@@ -36,26 +36,26 @@ The portfolio needs a clear rule that keeps org governance local to the namespac
 2. **Blast-radius control.** A change in one namespace's `.github` repository should not silently change another namespace's policy surface.
 3. **Auditability.** Reviewers should be able to identify the authoritative org ADRs, community-health files, and workflow policies from the repository's owner/name.
 4. **Useful automation.** Drift gates should detect real drift, not force namespace-specific files to pretend they are byte-identical.
-5. **Template reuse.** Stack templates can still live in `NWarila` when they are explicitly type-template dependencies rather than org governance.
+5. **Template reuse.** Stack templates can still live in `NWarila` when they are explicitly type-template dependencies rather than platform org governance.
 
 ## Considered Options
 
 1. Use a single shared `NWarila/.github` control plane for both namespaces.
-2. Duplicate all templates and tools into each namespace, forbidding cross-namespace dependencies entirely.
+2. Duplicate all templates and tools into `nwarila-platform`, forbidding cross-namespace dependencies entirely.
 3. Keep org control planes namespace-local, while allowing explicit cross-namespace type-template and tool dependencies.
 
 ## Decision Outcome
 
 Chosen option: **Option 3, keep org control planes namespace-local while allowing explicit type-template and tool dependencies.**
 
-For repositories whose owner is `NWarila`:
+For repositories whose owner is `nwarila-platform`:
 
-- Org-baseline ADRs are sourced from `NWarila/.github/docs/decision-records/`.
-- Community-health files and org defaults are sourced from `NWarila/.github`.
-- Org reusable workflow callers such as repo hygiene, CodeQL, IaC/security, Scorecard, release-please, and auto-merge call `NWarila/.github`.
-- `repo-hygiene` callers set `source_ref` to the same `NWarila/.github` commit SHA used in the reusable workflow `uses:` reference.
+- Org-baseline ADRs are sourced from `nwarila-platform/.github/docs/decision-records/`.
+- Community-health files and org defaults are sourced from `nwarila-platform/.github`.
+- Org reusable workflow callers such as repo hygiene, CodeQL, IaC/security, Scorecard, release-please, and auto-merge call `nwarila-platform/.github`.
+- `repo-hygiene` callers set `source_ref` to the same `nwarila-platform/.github` commit SHA used in the reusable workflow `uses:` reference.
 
-For repositories owned by another namespace, the same categories are sourced from that namespace's `.github` repository. A `nwarila-platform/*` repository therefore calls `nwarila-platform/.github` for org reusable workflows and mirrors org ADRs from `nwarila-platform/.github`.
+For repositories owned by another namespace, the same categories are sourced from that namespace's `.github` repository. A `NWarila/*` repository therefore calls `NWarila/.github` for org reusable workflows and mirrors org ADRs from `NWarila/.github`.
 
 Cross-namespace references remain valid when they are not org control planes. Examples include type-template repositories, drift-gate itself, and framework reusable workflows that are intentionally published as stack templates. Those dependencies must still be pinned by full commit SHA where repo-hygiene requires it.
 
@@ -91,9 +91,9 @@ Template manifests must distinguish byte-identical files from namespace-specific
 
 Adherence to this ADR is confirmed by the following mechanisms. The wording `MUST`, `SHOULD`, and `MAY` follows RFC 2119 conventions.
 
-1. **Workflow namespace check.** A `NWarila/*` repository's reusable workflow calls to org governance workflows MUST use `NWarila/.github/.github/workflows/...` pinned by full commit SHA.
-2. **Repo-hygiene source check.** A `NWarila/*` repo-hygiene caller MUST set `source_ref` to the same `NWarila/.github` commit SHA used in the workflow `uses:` reference.
-3. **ADR mirror source check.** A `NWarila/*` repository that mirrors org ADRs MUST mirror them from `NWarila/.github`.
+1. **Workflow namespace check.** A `nwarila-platform/*` repository's reusable workflow calls to org governance workflows MUST use `nwarila-platform/.github/.github/workflows/...` pinned by full commit SHA.
+2. **Repo-hygiene source check.** A `nwarila-platform/*` repo-hygiene caller MUST set `source_ref` to the same `nwarila-platform/.github` commit SHA used in the workflow `uses:` reference.
+3. **ADR mirror source check.** A `nwarila-platform/*` repository that mirrors org ADRs MUST mirror them from `nwarila-platform/.github`.
 4. **Cross-namespace exception check.** A cross-namespace dependency MUST be recognizable as a type-template, tool, or other explicit non-org-control-plane dependency.
 5. **Manifest classification check.** Type-template manifests SHOULD classify files that embed org-control-plane repository names as starter or customizable files unless the template and all consumers share the same namespace.
 6. **Review rule.** Any PR that introduces a reusable workflow caller to another namespace's `.github` repository MUST explain why it is not an org-control-plane dependency, or it should be rejected.
@@ -103,7 +103,7 @@ Adherence to this ADR is confirmed by the following mechanisms. The wording `MUS
 ### Positive
 
 - Org policy ownership is obvious from repository ownership.
-- A namespace can harden its reusable workflows without unexpectedly changing another namespace's repositories.
+- The platform namespace can harden its reusable workflows without unexpectedly changing `NWarila/*` repositories.
 - Drift-gate failures become more meaningful because namespace-specific files are not forced into byte identity.
 - Cross-namespace type-template reuse remains available and explicit.
 
@@ -116,7 +116,7 @@ Adherence to this ADR is confirmed by the following mechanisms. The wording `MUS
 ### Neutral
 
 - This ADR does not change the ADR format or the three-scope ADR model from ADR-0001.
-- This ADR does not forbid `NWarila/*` repositories from consuming `nwarila-platform/*` tools if a later repository-specific decision justifies that dependency.
+- This ADR does not forbid `nwarila-platform/*` repositories from consuming `NWarila/*` type-template repositories when the dependency is explicit.
 - This ADR documents an ownership rule that was already implicit in the separate org-baseline ADR sets.
 
 ## Assumptions
@@ -136,8 +136,9 @@ None (current).
 
 ## Implementing PRs
 
-- [`NWarila/.github#18`](https://github.com/NWarila/.github/pull/18) removed the repo-hygiene advisory bypass and produced the current hard-fail org reusable baseline.
-- [`NWarila/chiseled-application-template#13`](https://github.com/NWarila/chiseled-application-template/pull/13) pinned `NWarila` template workflow callers and org ADR sync to the current `NWarila/.github` baseline.
+- [`nwarila-platform/.github#10`](https://github.com/nwarila-platform/.github/pull/10) established platform-owned reusable workflows.
+- [`nwarila-platform/chiseled-hashicorp-vault#11`](https://github.com/nwarila-platform/chiseled-hashicorp-vault/pull/11) repointed Vault to the platform control plane and refreshed platform org ADR mirrors.
+- [`nwarila-platform/proxmox-terraform-framework#64`](https://github.com/nwarila-platform/proxmox-terraform-framework/pull/64) repointed Proxmox framework workflows to the platform control plane.
 
 ## Related ADRs
 
@@ -150,6 +151,6 @@ This decision supports configuration management and separation of duties. It kee
 
 ## Changelog
 
-| Date       | Change                                    | Reason                                      | Author/Role                       | Body-diff? |
-| ---------- | ----------------------------------------- | ------------------------------------------- | --------------------------------- | ---------- |
-| 2026-06-02 | Refreshed metadata and removed final blank lint drift. | Apply ADR-0001 living metadata and keep Markdown lint green. | Portfolio maintainer / governance | Yes        |
+| Date       | Change                      | Reason                                     | Author/Role                       | Body-diff? |
+| ---------- | --------------------------- | ------------------------------------------ | --------------------------------- | ---------- |
+| 2026-06-02 | Refreshed living metadata.  | Apply ADR-0001 living metadata guardrails. | Portfolio maintainer / governance | Yes        |

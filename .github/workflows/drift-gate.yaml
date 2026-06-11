@@ -2,7 +2,7 @@ name: Drift Gate
 
 # Verifies that this consumer's mirrored copies of upstream baseline
 # files are byte-identical to their canonical sources at SHA-pinned
-# revisions. Per NWarila/.github ADR-0001 (three-tier ADR
+# revisions. Per nwarila-platform/.github ADR-0001 (three-tier ADR
 # model) this framework-example is a child repo of the org canonical
 # and must mirror its baseline files, including community-health
 # policy docs. Failure surfaces inline as annotations in the PR's
@@ -30,10 +30,10 @@ jobs:
     steps:
       - name: Drift gate (org baseline)
         # renovate: datasource=git-refs depName=NWarila/drift-gate
-        uses: NWarila/drift-gate@dac07c2b2a30a084b3577d4712549291ae99879c # NWarila/drift-gate main @ 2026-05-29
+        uses: NWarila/drift-gate@3864401ce520ecb851311efb4ba1a199808768fb # NWarila/drift-gate main @ 2026-06-11
         with:
-          source-repo: NWarila/.github
-          # renovate: depName=NWarila/.github packageName=NWarila/.github currentValue=main
-          source-ref: 791fe6af86fcccf8de807a09b9f7c8f38f268532
+          source-repo: nwarila-platform/.github
+          # renovate: depName=nwarila-platform/.github packageName=nwarila-platform/.github currentValue=main
+          source-ref: 0d2a0752d4c618907d735af4a7c12a9214c8517e
           manifest: baseline-manifest.json
           check-name: org-baseline / verify

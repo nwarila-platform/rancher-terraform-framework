@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in contributing. This guide applies to repositories under [NWarila](https://github.com/NWarila).
+Thanks for your interest in contributing. This guide applies to all repositories under [NWarila](https://github.com/NWarila) unless a repository has its own `CONTRIBUTING.md`.
 
 ## How to contribute
 
@@ -18,7 +18,7 @@ Open an issue using the **Documentation** template with the page or section that
 
 ### Asking questions
 
-Open an issue on the [Issues](https://github.com/NWarila/.github/issues/new/choose) tab for questions, ideas, and general conversation; choose the template that best fits, or use the closest one if none matches exactly. For security-sensitive questions, use the private channel described below instead.
+Use [Discussions](https://github.com/NWarila/.github/discussions) for questions, ideas, and general conversation. Issues are for actionable work.
 
 ### Reporting security vulnerabilities
 
@@ -43,6 +43,6 @@ Open an issue on the [Issues](https://github.com/NWarila/.github/issues/new/choo
 
 All contributors are expected to follow the project's code of conduct. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for details.
 
-## Repository-specific guidance
+## Repository-specific overrides
 
-Repositories that adopt the org drift-gated baseline keep this file byte-identical with `NWarila/.github`. Repository-specific contributor guidance belongs in that repository's Diataxis docs, usually `docs/how-to/develop-this-module.md` or an adjacent how-to guide.
+Individual repositories may have their own `CONTRIBUTING.md` with different or additional guidelines. When present, the repository-specific version takes precedence over this default.

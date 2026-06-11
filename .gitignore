@@ -33,6 +33,7 @@
 !/.github/workflows/reusable-release-evidence.yaml
 !/.github/workflows/reusable-terraform-deploy.yaml
 !/.github/workflows/security.yaml
+!/.github/workflows/template-sync.yaml
 
 !/docs/
 !/docs/README.md

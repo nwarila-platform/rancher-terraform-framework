@@ -1,0 +1,29 @@
+C4Context
+  title terraform-framework-template — system topology
+
+  Person(maintainer, "Portfolio maintainer", "Nick Warila — owns templates, runner, and deployed frameworks")
+
+  System_Boundary(template_tier, "Template tier (NWarila personal)") {
+    System(framework_template, "terraform-framework-template", "Canonical synthetic Terraform module + reusable deploy workflow + validation harness. This repo.")
+  }
+
+  System_Boundary(runner_tier, "Runner tier (NWarila personal)") {
+    System(runner, "github-terraform-runner", "Holds per-repo YAML inventory. Calls reusable-terraform-deploy.yaml at a pinned framework_ref to plan / apply GitHub Terraform state.")
+  }
+
+  System_Boundary(framework_tier, "Deployed-framework tier (nwarila-platform org)") {
+    System(deployed_framework, "nwarila-platform/github-terraform-framework", "Real Terraform module that manages GitHub repos, rulesets, and CODEOWNERS. Derived from this template.")
+    System(proxmox_framework, "nwarila-platform/proxmox-terraform-framework", "Real Terraform module managing Proxmox VMs. Another derivative framework.")
+  }
+
+  System_Ext(github_api, "GitHub API", "REST + GraphQL endpoints managed by the deployed framework")
+  System_Ext(org_github, "NWarila/.github", "Org-baseline ADR masters and universal CI reusables")
+
+  Rel(maintainer, framework_template, "Opens PRs, reviews, merges")
+  Rel(maintainer, runner, "Manages inventory YAML and deploy triggers")
+  Rel(runner, framework_template, "Calls reusable-terraform-deploy.yaml at pinned SHA (framework_ref)")
+  Rel(runner, deployed_framework, "Overlays repo YAML inventory into pinned framework checkout at deploy time")
+  Rel(deployed_framework, github_api, "terraform apply / plan")
+  Rel(framework_template, org_github, "Mirrors org ADRs; calls org reusable CI workflows")
+  Rel(deployed_framework, framework_template, "Derived from template; inherits baseline-manifest.json scaffold")
+  Rel(proxmox_framework, framework_template, "Derived from template; inherits baseline-manifest.json scaffold")

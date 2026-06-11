@@ -1,0 +1,23 @@
+name: Auto-Merge
+
+# Enables GitHub auto-merge on trusted-bot PRs once required status checks
+# pass. Kept separate from release.yaml so pull_request_target has one
+# narrow, reviewable purpose.
+
+on:
+  # zizmor: ignore[dangerous-triggers] ADR-template/0004 + OPA; no PR checkout.
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review, labeled]
+
+permissions: {}
+
+concurrency:
+  group: auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  auto-merge:
+    permissions:
+      contents: write # required for GitHub auto-merge to update the protected branch
+      pull-requests: write # required to enable auto-merge on trusted-bot pull requests
+    uses: NWarila/.github/.github/workflows/reusable-auto-merge.yaml@19a4c98f404039292bb4a74c60602f3229539958 # NWarila/.github main @ 2026-06-04

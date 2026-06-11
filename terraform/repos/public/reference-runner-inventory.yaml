@@ -1,0 +1,9 @@
+# Reference runner inventory consumed by terraform-framework-template tests.
+#
+# Runner repositories overlay files into terraform/repos/. The framework reads
+# this tree and exposes stable metadata through output.runner_inventory so that
+# the overlay path is a real data dependency.
+repositories:
+  - name: reference
+    visibility: public
+    owner: team-platform

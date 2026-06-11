@@ -1,0 +1,59 @@
+name: Release
+
+# Optional release entrypoint for release-please and release evidence.
+# Trusted-bot auto-merge lives in auto-merge.yaml so pull_request_target
+# is isolated from release publishing paths.
+
+on:
+  push:
+    branches: [main]
+  # Human-published releases still enter through this event. The normal
+  # release-please path publishes with GITHUB_TOKEN, whose release events do
+  # not cascade, so reusable-release-please.yaml dispatches `release-evidence`
+  # explicitly after it creates a release.
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: Release task to run.
+        required: true
+        type: choice
+        default: release-please
+        options:
+          - release-please
+          - release-evidence
+
+permissions:
+  contents: read # required for reusable release workflows to read repository metadata
+
+concurrency:
+  group: release-${{ github.ref || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Release Please
+    # Push-triggered release-please needs the repository setting that allows
+    # GitHub Actions to create pull requests. Keep that path opt-in so a fresh
+    # template repo does not start with a red main check.
+    if: ${{ (github.event_name == 'push' && vars.RELEASE_PLEASE_ON_PUSH == 'true') || (github.event_name == 'workflow_dispatch' && inputs.task == 'release-please') }}
+    permissions:
+      contents: write # required for release-please to create tags and GitHub releases
+      pull-requests: write # required for release-please to open and update release PRs
+      issues: write # required for release-please issue and label bookkeeping
+      actions: write # required to dispatch release-evidence after publishing a release
+    uses: NWarila/.github/.github/workflows/reusable-release-please.yaml@19a4c98f404039292bb4a74c60602f3229539958 # NWarila/.github main @ 2026-06-04
+
+  evidence:
+    name: Release Evidence
+    if: ${{ github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.task == 'release-evidence') }}
+    permissions:
+      attestations: write # required to publish artifact attestations for release evidence
+      contents: write # required to upload release evidence artifacts
+      id-token: write # required for artifact attestation provenance
+    uses: ./.github/workflows/reusable-release-evidence.yaml
+    with:
+      # renovate: datasource=github-releases depName=hashicorp/terraform extractVersion=^v(?<version>.*)$ versioning=hashicorp
+      terraform_version: "1.15.4"
+      repo_type: framework

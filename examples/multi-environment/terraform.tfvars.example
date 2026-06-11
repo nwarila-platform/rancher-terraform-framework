@@ -1,0 +1,76 @@
+# Realistic multi-environment usage exercising every framework
+# pattern: required + optional scalars, list-of-objects (manifests +
+# lifecycle hooks), single-optional blocks (rotation + certificate
+# with nested subject), tags, and per-env tier defaults injected from
+# the data fixture.
+
+environment_prefix = "demo"
+global_tag         = "framework-example-multi"
+
+all_environments = [
+
+  # Minimal dev environment. Demonstrates that all optional fields
+  # accept their tier-default + null treatment without requiring any
+  # input from the consumer.
+  {
+    name  = "alpha"
+    owner = "team-platform"
+    tier  = "dev"
+    tags  = ["frontend", "experimental"]
+    manifests = [
+      {
+        filename = "alpha-config.yaml"
+        content  = "service: alpha\nenv: dev\n"
+      },
+    ]
+  },
+
+  # Staging env exercising lifecycle hooks + rotation.
+  {
+    name        = "beta"
+    owner       = "team-platform"
+    tier        = "staging"
+    description = "Staging environment for beta service. Drives rotation testing."
+    tags        = ["frontend", "rotating"]
+    manifests = [
+      { filename = "beta-config.yaml", content = "service: beta\nenv: staging\n" },
+      { filename = "beta-secrets.yaml", content = "service: beta\nsecret_ref: vault://staging/beta\n", permissions = "0600" },
+    ]
+    lifecycle_hooks = [
+      { name = "beta-pre-deploy" },
+      { name = "beta-post-deploy", triggers = { phase = "post" } },
+    ]
+    rotation = {
+      rotation_days = 30
+    }
+  },
+
+  # Prod env exercising the certificate + nested subject block.
+  {
+    name        = "gamma"
+    owner       = "team-platform"
+    tier        = "prod"
+    description = "Production environment with self-signed certificate."
+    tags        = ["frontend", "secured"]
+    pet = {
+      length = 3
+      prefix = "prod"
+    }
+    certificate = {
+      validity_period_hours = 8760 # 1 year
+      is_ca_certificate     = false
+      allowed_uses          = ["digital_signature", "key_encipherment", "server_auth"]
+      subject = {
+        common_name         = "gamma.synthetic.example.invalid"
+        organization        = "Framework Example Inc."
+        organizational_unit = "Platform Team"
+        country             = "US"
+        province            = "CA"
+        locality            = "San Francisco"
+      }
+    }
+    rotation = {
+      rotation_days = 90
+    }
+  },
+]

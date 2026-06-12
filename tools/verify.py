@@ -197,6 +197,15 @@ def opa_policy() -> None:
 
 
 def opa_plan() -> None:
+    fixture = ROOT / "examples" / "multi-environment" / "terraform.tfvars.example"
+    if not fixture.is_file():
+        print(
+            "opa-plan skipped: Rancher plan-policy fixture is deferred to Step 3 "
+            f"({fixture.relative_to(ROOT).as_posix()} not present)",
+            flush=True,
+        )
+        return
+
     plan_dir = ROOT / ".tmp" / "opa-plan"
     plan_dir.mkdir(parents=True, exist_ok=True)
     plan_path = "../.tmp/opa-plan/framework-plan.tfplan"
@@ -218,7 +227,7 @@ def opa_plan() -> None:
             "-input=false",
             "-out",
             plan_path,
-            "-var-file=../examples/multi-environment/terraform.tfvars.example",
+            f"-var-file=../{fixture.relative_to(ROOT).as_posix()}",
         ]
     )
     plan_json = capture(["terraform", "-chdir=terraform", "show", "-json", plan_path])

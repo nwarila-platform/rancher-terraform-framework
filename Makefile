@@ -65,9 +65,8 @@ opa-test:
 opa-policy:
 	$(PYTHON) tools/verify.py opa-policy
 
-# OPA plan enforcement. Builds a real tfplan from the multi-environment
-# example, normalizes `terraform show -json`, and evaluates planned
-# Terraform resources against the shared OPA plan policy.
+# OPA plan enforcement. Rancher-specific plan policy is introduced in Step 3;
+# until its example fixture exists, tools/verify.py reports this target skipped.
 opa-plan:
 	$(PYTHON) tools/verify.py opa-plan
 

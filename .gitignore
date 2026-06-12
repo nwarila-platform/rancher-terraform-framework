@@ -111,6 +111,7 @@
 !/terraform/tests/caps-validation.tftest.hcl
 !/terraform/tests/identity-ingress-validation.tftest.hcl
 !/terraform/tests/values-secret-validation.tftest.hcl
+!/terraform/tests/storage-validation.tftest.hcl
 
 !/tools/
 !/tools/build_opa_input.py

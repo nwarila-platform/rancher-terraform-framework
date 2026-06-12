@@ -83,6 +83,8 @@
 !/docs/decision-records/repo/0003-define-tenant-repo-contract.md
 !/docs/decision-records/repo/0004-use-vault-references-and-vault-secrets-operator.md
 !/docs/decision-records/repo/0005-validate-with-ephemeral-rancher-ci.md
+!/docs/decision-records/repo/0006-use-all-workloads-tenant-contract.md
+!/docs/decision-records/repo/0007-adopt-packer-limited-hcl-style.md
 
 !/policies/
 !/policies/opa/

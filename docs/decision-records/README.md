@@ -51,3 +51,5 @@ the org drift gate.
 | [ADR-repo/0003](repo/0003-define-tenant-repo-contract.md) | Accepted | Define the tenant deliverable as an in-repo chart plus one tfvars file derived from `deploy-tenant-template`. |
 | [ADR-repo/0004](repo/0004-use-vault-references-and-vault-secrets-operator.md) | Accepted | Accept Vault references only and materialize secrets with Vault Secrets Operator. |
 | [ADR-repo/0005](repo/0005-validate-with-ephemeral-rancher-ci.md) | Accepted | Validate the mechanism against a disposable full Rancher CI environment. |
+| [ADR-repo/0006](repo/0006-use-all-workloads-tenant-contract.md) | Accepted | Use `all_workloads` so one tenant tfvars can define multiple per-workload namespaces and releases under one tenant project. |
+| [ADR-repo/0007](repo/0007-adopt-packer-limited-hcl-style.md) | Accepted | Adopt the packer-limited HCL source style for future Terraform implementation work. |

@@ -1,13 +1,14 @@
 # rancher-terraform-framework
 
 Reusable Rancher PaaS framework module for NWarila-hosted Kubernetes. A tenant
-repository derives from `deploy-tenant-template`, keeps its own in-repo Helm
-chart plus one `terraform.tfvars`, consumes this module, and deploys any
-Kubernetes workload shape that can pass the platform security baseline. This
+repository derives from `deploy-tenant-template`, keeps in-repo Helm chart
+source plus one `terraform.tfvars`, and uses `all_workloads` to define one or
+more workload releases that can pass the platform security baseline. This
 repository is the framework module, not a deployment root: it will own the
-Rancher project and namespace envelope, deploy the tenant chart with
-`helm_release`, and enforce a two-layer security model built from tenant-repo
-render checks plus in-cluster Pod Security Admission Restricted and Kyverno.
+Rancher tenant project, create a namespace per workload, deploy each local chart
+with `helm_release`, and enforce a two-layer security model built from
+tenant-repo render checks plus in-cluster Pod Security Admission Restricted and
+Kyverno.
 
 The Rancher-specific Terraform module, golden chart starter, policy manifests,
 tenant template, and ephemeral-Rancher CI harness are being built in small,
@@ -43,3 +44,5 @@ credentials.
 - [ADR-repo/0003](docs/decision-records/repo/0003-define-tenant-repo-contract.md) defines the tenant repository contract and the three audited escape hatches.
 - [ADR-repo/0004](docs/decision-records/repo/0004-use-vault-references-and-vault-secrets-operator.md) keeps secret values out of Terraform and Helm inputs.
 - [ADR-repo/0005](docs/decision-records/repo/0005-validate-with-ephemeral-rancher-ci.md) commits validation to a disposable full Rancher CI environment.
+- [ADR-repo/0006](docs/decision-records/repo/0006-use-all-workloads-tenant-contract.md) updates the tenant contract to `all_workloads` under one tenant project.
+- [ADR-repo/0007](docs/decision-records/repo/0007-adopt-packer-limited-hcl-style.md) adopts the packer-limited HCL style for future Terraform implementation work.

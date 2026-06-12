@@ -100,6 +100,8 @@
 !/charts/platform-workload/templates/
 !/charts/platform-workload/templates/_helpers.tpl
 !/charts/platform-workload/templates/deployment.yaml
+!/charts/platform-workload/templates/service.yaml
+!/charts/platform-workload/templates/ingress.yaml
 
 !/terraform/
 !/terraform/.terraform.lock.hcl

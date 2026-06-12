@@ -9,6 +9,16 @@ image:
 
 containerPort: 8080
 
+service:
+  # Keep exposure internal; external entry is through the Ingress below.
+  port: 80
+
+ingress:
+  # Omit by default so the cluster's default IngressClass can handle routing.
+  className: null
+  # Prefix matches the platform contract's single workload path cleanly.
+  pathType: Prefix
+
 # Optional non-secret environment variables for the workload container.
 env: []
 

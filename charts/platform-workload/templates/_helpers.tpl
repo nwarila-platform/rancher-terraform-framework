@@ -47,3 +47,14 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
+
+{{/*
+Create the ServiceAccount name.
+*/}}
+{{- define "platform-workload.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+{{- default (include "platform-workload.fullname" .) .Values.serviceAccount.name -}}
+{{- else -}}
+{{- default "default" .Values.serviceAccount.name -}}
+{{- end -}}
+{{- end -}}

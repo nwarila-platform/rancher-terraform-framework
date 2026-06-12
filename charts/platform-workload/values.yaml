@@ -9,6 +9,14 @@ image:
 
 containerPort: 8080
 
+serviceAccount:
+  # Create a dedicated identity for this workload.
+  create: true
+  # Leave empty to use the chart fullname; set when reusing a named identity.
+  name: ""
+  # Optional annotations for cluster identity integrations.
+  annotations: {}
+
 service:
   # Keep exposure internal; external entry is through the Ingress below.
   port: 80

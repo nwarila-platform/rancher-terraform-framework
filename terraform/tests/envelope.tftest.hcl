@@ -18,16 +18,22 @@ variables {
 
   cluster_id                         = "c-mock"
   project_name                       = "tenant-project"
-  namespace_name                     = "tenant-app"
   tenant_reconciler_role_template_id = "nwarila-tenant-reconciler"
   tenant_reconciler_principal = {
     group_principal_id = "local://tenant-reconcilers"
   }
 
-  ingress = {
-    host = "tenant.example.test"
-    path = "/"
-  }
+  all_workloads = [
+    {
+      key            = "app"
+      namespace_name = "tenant-app"
+
+      ingress = {
+        host = "tenant.example.test"
+        path = "/"
+      }
+    }
+  ]
 }
 
 run "rancher_envelope_wires_project_namespace_and_psa" {
@@ -44,12 +50,12 @@ run "rancher_envelope_wires_project_namespace_and_psa" {
   }
 
   assert {
-    condition     = rancher2_namespace.tenant.project_id == "c-mock:p-mock"
+    condition     = rancher2_namespace.workload["app"].project_id == "c-mock:p-mock"
     error_message = "The namespace must be assigned to the framework-created Rancher project."
   }
 
   assert {
-    condition     = rancher2_namespace.tenant.labels["pod-security.kubernetes.io/enforce"] == "restricted"
+    condition     = rancher2_namespace.workload["app"].labels["pod-security.kubernetes.io/enforce"] == "restricted"
     error_message = "The namespace must carry PSA Restricted enforce labels."
   }
 

@@ -12,27 +12,27 @@ output "project_name" {
   value       = rancher2_project.tenant.name
 }
 
-output "namespace_id" {
-  description = "Rancher namespace ID managed by this framework."
-  value       = rancher2_namespace.tenant.id
+output "namespace_ids" {
+  description = "Rancher namespace IDs managed by this framework, keyed by workload key."
+  value       = { for key, namespace in rancher2_namespace.workload : key => namespace.id }
 }
 
-output "namespace_name" {
-  description = "Kubernetes namespace name managed by this framework."
-  value       = rancher2_namespace.tenant.name
+output "namespace_names" {
+  description = "Kubernetes namespace names managed by this framework, keyed by workload key."
+  value       = { for key, namespace in rancher2_namespace.workload : key => namespace.name }
 }
 
-output "helm_release_name" {
-  description = "Helm release name deployed into the tenant namespace."
-  value       = helm_release.tenant.name
+output "helm_release_names" {
+  description = "Helm release names deployed into tenant namespaces, keyed by workload key."
+  value       = { for key, release in helm_release.workload : key => release.name }
 }
 
-output "helm_release_status" {
-  description = "Helm release status reported by the Helm provider."
-  value       = helm_release.tenant.status
+output "helm_release_statuses" {
+  description = "Helm release statuses reported by the Helm provider, keyed by workload key."
+  value       = { for key, release in helm_release.workload : key => release.status }
 }
 
-output "chart_path" {
-  description = "Resolved local chart path supplied to helm_release."
-  value       = local.chart_path
+output "chart_paths" {
+  description = "Resolved local chart paths supplied to helm_release, keyed by workload key."
+  value       = { for key, workload in local.workloads : key => workload.chart_path }
 }

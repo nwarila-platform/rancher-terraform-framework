@@ -18,28 +18,36 @@ locals {
 # Dynamically Configured LOCALS
 locals {
 
-  chart_path = coalesce(var.chart_path, "${path.root}/chart")
-
-  platform_values = {
-    platform = {
-      ingress                 = var.ingress
-      replicas                = var.replicas
-      hpa                     = var.hpa
-      resources               = var.resources
-      vault_secret_references = var.vault_secret_references
-      persistent_storage      = var.persistent_storage
-      escape_hatches = merge(
-        var.escape_hatches,
-        {
-          persistent_storage = var.persistent_storage != null
-        }
-      )
-      platform_caps = var.platform_caps
-    }
+  workloads = {
+    for workload in var.all_workloads : workload.key => merge(workload, {
+      namespace_name = coalesce(workload.namespace_name, workload.key)
+      release_name   = coalesce(workload.release_name, workload.key)
+      chart_path     = coalesce(workload.chart_path, "${path.root}/chart")
+      helm_values = [
+        yamlencode(
+          merge(
+            workload.values,
+            {
+              platform = {
+                ingress                 = workload.ingress
+                replicas                = workload.replicas
+                hpa                     = workload.hpa
+                resources               = workload.resources
+                vault_secret_references = workload.vault_secret_references
+                persistent_storage      = workload.persistent_storage
+                escape_hatches = merge(
+                  workload.escape_hatches,
+                  {
+                    persistent_storage = workload.persistent_storage != null
+                  }
+                )
+                platform_caps = var.platform_caps
+              }
+            }
+          )
+        )
+      ]
+    })
   }
-
-  helm_values = [
-    yamlencode(merge(var.values, local.platform_values))
-  ]
 
 }

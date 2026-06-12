@@ -13,6 +13,12 @@ service:
   # Keep exposure internal; external entry is through the Ingress below.
   port: 80
 
+pdb:
+  # Enabled by default so voluntary disruptions are bounded for replicated workloads.
+  enabled: true
+  # Prefer maxUnavailable over minAvailable so HPA scale changes do not deadlock drains.
+  maxUnavailable: 1
+
 ingress:
   # Omit by default so the cluster's default IngressClass can handle routing.
   className: null

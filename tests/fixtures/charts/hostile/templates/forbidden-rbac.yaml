@@ -1,0 +1,32 @@
+# DELIBERATELY NON-COMPLIANT FIXTURE — for negative policy testing only; never deploy.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: hostile-fixture-secret-reader
+  labels:
+    app.kubernetes.io/name: hostile-fixture
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+---
+# DELIBERATELY NON-COMPLIANT FIXTURE — for negative policy testing only; never deploy.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: hostile-fixture-secret-reader
+  labels:
+    app.kubernetes.io/name: hostile-fixture
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: hostile-fixture-secret-reader
+subjects:
+  - kind: ServiceAccount
+    name: default

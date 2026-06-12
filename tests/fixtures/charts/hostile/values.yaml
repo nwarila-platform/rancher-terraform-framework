@@ -1,0 +1,8 @@
+replicaCount: 1
+
+image:
+  repository: bad-registry.invalid/tenant/rootkit
+  tag: latest
+
+service:
+  port: 80

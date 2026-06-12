@@ -95,14 +95,13 @@
 
 !/terraform/
 !/terraform/.terraform.lock.hcl
-!/terraform/00-providers.tf
-!/terraform/02-provider-rancher2.tf
-!/terraform/04-provider-helm.tf
-!/terraform/10-variables.tf
-!/terraform/12-variables-rancher.tf
-!/terraform/32-locals-rancher.tf
-!/terraform/50-resources.tf
-!/terraform/60-outputs.tf
+!/terraform/backend.tf
+!/terraform/versions.tf
+!/terraform/providers.tf
+!/terraform/variables.tf
+!/terraform/locals.tf
+!/terraform/resources.tf
+!/terraform/outputs.tf
 !/terraform/backend.hcl
 !/terraform/terraform.tfvars.example
 !/terraform/tests/

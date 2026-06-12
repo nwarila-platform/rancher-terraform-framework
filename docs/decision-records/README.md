@@ -11,8 +11,7 @@ ADRs are organized into three scopes:
   [`NWarila/terraform-framework-template`](https://github.com/NWarila/terraform-framework-template).
   Derivative frameworks mirror the `byte_identical` baseline entries through
   `baseline-manifest.json`.
-- `repo/` - repository-specific ADRs for this repository only. This scope is
-  currently empty.
+- `repo/` - repository-specific ADRs for this repository only.
 
 `rancher-terraform-framework` is a derivative framework consumer: it inherits
 the canonical framework command surface, validation tooling, reusable deploy
@@ -45,4 +44,10 @@ the org drift gate.
 
 ## Repo ADRs
 
-No repo-specific ADRs are recorded yet.
+| ADR | Status | Decision |
+| --- | --- | --- |
+| [ADR-repo/0001](repo/0001-adopt-rancher2-envelope-and-helm-release-local-chart.md) | Accepted | Adopt the Rancher envelope plus `helm_release` of tenant-owned local charts. |
+| [ADR-repo/0002](repo/0002-use-two-layer-tenant-security.md) | Accepted | Use tenant-repo render checks plus in-cluster PSA Restricted, Kyverno, and envelope RBAC as the tenant security boundary. |
+| [ADR-repo/0003](repo/0003-define-tenant-repo-contract.md) | Accepted | Define the tenant deliverable as an in-repo chart plus one tfvars file derived from `deploy-tenant-template`. |
+| [ADR-repo/0004](repo/0004-use-vault-references-and-vault-secrets-operator.md) | Accepted | Accept Vault references only and materialize secrets with Vault Secrets Operator. |
+| [ADR-repo/0005](repo/0005-validate-with-ephemeral-rancher-ci.md) | Accepted | Validate the mechanism against a disposable full Rancher CI environment. |

@@ -9,6 +9,7 @@
 !/.terraform-docs.yml
 !/.tflint.hcl
 !/Makefile
+!/README.md
 
 !/LICENSE
 !/CODE_OF_CONDUCT.md
@@ -76,6 +77,11 @@
 !/docs/decision-records/template/0005-classify-org-control-plane-callers-as-scaffold.md
 !/docs/decision-records/repo/
 !/docs/decision-records/repo/.gitkeep
+!/docs/decision-records/repo/0001-adopt-rancher2-envelope-and-helm-release-local-chart.md
+!/docs/decision-records/repo/0002-use-two-layer-tenant-security.md
+!/docs/decision-records/repo/0003-define-tenant-repo-contract.md
+!/docs/decision-records/repo/0004-use-vault-references-and-vault-secrets-operator.md
+!/docs/decision-records/repo/0005-validate-with-ephemeral-rancher-ci.md
 
 !/policies/
 !/policies/opa/

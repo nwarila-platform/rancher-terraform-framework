@@ -1,0 +1,51 @@
+{{- $repository := required "image.repository is required." .Values.image.repository -}}
+{{- $digest := required "image.digest is required; set a sha256 digest such as sha256:<64 hex chars>." .Values.image.digest -}}
+{{- if not (regexMatch "^sha256:[a-fA-F0-9]{64}$" $digest) -}}
+{{- fail "image.digest must be a sha256 digest in the form sha256:<64 hex chars>." -}}
+{{- end -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "platform-workload.fullname" . }}
+  labels:
+    {{- include "platform-workload.labels" . | nindent 4 }}
+spec:
+  replicas: {{ int .Values.platform.replicas }}
+  selector:
+    matchLabels:
+      {{- include "platform-workload.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "platform-workload.labels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: {{ default false .Values.platform.escape_hatches.api_access_service_account_token }}
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: {{ include "platform-workload.name" . }}
+          image: {{ printf "%s@%s" $repository $digest | quote }}
+          imagePullPolicy: {{ default "IfNotPresent" .Values.image.pullPolicy | quote }}
+          ports:
+            - name: http
+              containerPort: {{ int .Values.containerPort }}
+              protocol: TCP
+          {{- with .Values.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.platform.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              {{- if (default false .Values.platform.escape_hatches.net_bind_service) }}
+              add:
+                - NET_BIND_SERVICE
+              {{- end }}
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true

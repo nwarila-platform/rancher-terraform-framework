@@ -1,0 +1,6 @@
+apiVersion: v2
+name: platform-workload
+description: Hardened NWarila starter chart for Rancher-managed tenant workloads.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

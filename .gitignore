@@ -92,6 +92,15 @@
 !/policies/opa/repo_hygiene.rego
 !/policies/opa/repo_hygiene_test.rego
 
+!/charts/
+!/charts/platform-workload/
+!/charts/platform-workload/.helmignore
+!/charts/platform-workload/Chart.yaml
+!/charts/platform-workload/values.yaml
+!/charts/platform-workload/templates/
+!/charts/platform-workload/templates/_helpers.tpl
+!/charts/platform-workload/templates/deployment.yaml
+
 !/terraform/
 !/terraform/.terraform.lock.hcl
 !/terraform/backend.tf

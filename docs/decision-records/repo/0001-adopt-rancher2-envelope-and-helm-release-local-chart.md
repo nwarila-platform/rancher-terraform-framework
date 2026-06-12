@@ -243,7 +243,7 @@ destroyed in the same validation flow.
 
 ## Superseded by
 
-None (current).
+- [ADR-repo/0006](0006-use-all-workloads-tenant-contract.md) for the single-chart, single-namespace delivery clauses only. This ADR's Rancher envelope, local chart, and real-provider CI decisions remain current.
 
 ## Implementing PRs
 

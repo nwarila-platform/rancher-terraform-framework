@@ -212,7 +212,7 @@ None.
 
 ## Superseded by
 
-None (current).
+- [ADR-repo/0006](0006-use-all-workloads-tenant-contract.md) for the one-chart tenant contract clauses only. This ADR's tenant-owned chart source, one expected tfvars file, constrained input surface, and three escape-hatch decisions remain current.
 
 ## Implementing PRs
 

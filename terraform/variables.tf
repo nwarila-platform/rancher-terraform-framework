@@ -80,6 +80,35 @@ variable "all_workloads" {
   }
 
   validation {
+    condition     = length(distinct([for workload in var.all_workloads : workload.key])) == length(var.all_workloads)
+    error_message = "all_workloads[*].key values must be unique."
+  }
+
+  validation {
+    condition = (
+      length(distinct([
+        for workload in var.all_workloads : coalesce(workload.namespace_name, workload.key)
+      ])) == length(var.all_workloads)
+    )
+    error_message = "all_workloads[*].namespace_name values, after defaulting null values to workload.key, must be unique."
+  }
+
+  validation {
+    condition     = length(distinct([for workload in var.all_workloads : workload.ingress.host])) == length(var.all_workloads)
+    error_message = "all_workloads[*].ingress.host values must be unique."
+  }
+
+  validation {
+    condition = alltrue([
+      for workload in var.all_workloads :
+      can(regex(local.rfc1123_dns_subdomain_pattern, workload.ingress.host)) &&
+      length(workload.ingress.host) <= 253 &&
+      startswith(workload.ingress.path, "/")
+    ])
+    error_message = "all_workloads[*].ingress.host must be an RFC 1123 DNS subdomain, and all_workloads[*].ingress.path must start with /."
+  }
+
+  validation {
     condition = alltrue([
       for workload in var.all_workloads :
       workload.replicas >= 1 &&

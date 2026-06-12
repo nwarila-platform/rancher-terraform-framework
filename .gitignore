@@ -106,6 +106,7 @@
 !/charts/platform-workload/templates/pdb.yaml
 !/charts/platform-workload/templates/serviceaccount.yaml
 !/charts/platform-workload/templates/pvc.yaml
+!/charts/platform-workload/templates/vault-secrets.yaml
 
 !/terraform/
 !/terraform/.terraform.lock.hcl

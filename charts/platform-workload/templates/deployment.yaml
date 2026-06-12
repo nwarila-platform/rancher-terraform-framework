@@ -44,6 +44,13 @@ spec:
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- if .Values.platform.vault_secret_references }}
+          envFrom:
+            {{- range $name, $_ := .Values.platform.vault_secret_references }}
+            - secretRef:
+                name: {{ printf "%s-%s" (include "platform-workload.fullname" $) $name | trunc 63 | trimSuffix "-" | quote }}
+            {{- end }}
+          {{- end }}
           resources:
             {{- toYaml .Values.platform.resources | nindent 12 }}
           securityContext:

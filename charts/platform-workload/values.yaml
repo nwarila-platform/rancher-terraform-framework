@@ -33,6 +33,15 @@ ingress:
   # Prefix matches the platform contract's single workload path cleanly.
   pathType: Prefix
 
+# Platform-owned Vault Secrets Operator wiring.
+# Terraform does not inject these yet; the platform baseline must provide the
+# referenced VaultAuth and KV mount.
+vault:
+  mount: kv
+  authRef: platform-vault-auth
+  namespace: null
+  refreshAfter: 1h
+
 # Optional non-secret environment variables for the workload container.
 env: []
 

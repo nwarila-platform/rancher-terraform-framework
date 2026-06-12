@@ -5,7 +5,14 @@
 #region ------ [ Tenant Workload Variables ] ------------------------------------------------- #
 
 variable "all_workloads" {
-  description = "Tenant workload envelopes deployed as per-workload namespaces and Helm releases."
+  description = <<-EOT
+  Tenant workload envelopes deployed as per-workload namespaces and Helm releases.
+  Workload values must not define the reserved top-level platform key, and must
+  not carry raw application secrets. The raw-secret check is a best-effort
+  Terraform heuristic for obvious secret-looking keys and PEM private-key
+  markers only; Vault references, Vault Secrets Operator, and admission policy
+  remain the authoritative secret controls.
+  EOT
   type = list(object({
     key            = string
     namespace_name = optional(string)
@@ -106,6 +113,38 @@ variable "all_workloads" {
       startswith(workload.ingress.path, "/")
     ])
     error_message = "all_workloads[*].ingress.host must be an RFC 1123 DNS subdomain, and all_workloads[*].ingress.path must start with /."
+  }
+
+  validation {
+    condition = alltrue([
+      for workload in var.all_workloads : !contains(keys(workload.values), "platform")
+    ])
+    error_message = "all_workloads[*].values must not include the reserved top-level platform key."
+  }
+
+  validation {
+    condition = alltrue([
+      for workload in var.all_workloads :
+      !can(regex(local.values_raw_secret_signal_pattern, lower(jsonencode(workload.values)))) &&
+      !can(regex(local.values_pem_private_key_pattern, lower(jsonencode(workload.values))))
+    ])
+    error_message = "all_workloads[*].values must not contain obvious inline secret values; use vault_secret_references instead."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for workload in var.all_workloads : [
+        for _, reference in workload.vault_secret_references :
+        length(trimspace(reference.path)) > 0 &&
+        contains(local.vault_secret_reference_engines, lower(trimspace(reference.engine))) &&
+        (
+          reference.version == null
+          ? true
+          : reference.version >= 1 && reference.version == floor(reference.version)
+        )
+      ]
+    ]))
+    error_message = "all_workloads[*].vault_secret_references entries must use a non-empty path, engine kv-v1 or kv-v2, and version >= 1 when set."
   }
 
   validation {

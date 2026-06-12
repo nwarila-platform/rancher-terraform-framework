@@ -1,17 +1,13 @@
-#% =========================================================================================== %#
-#% = File: 50-resources.tf                                       | Category: Resources (50-59) %#
-#% ----- [ Description ] --------------------------------------------------------------------- %#
-#% Resources are the most important element in the Terraform language. Each resource block     %#
-#%   describes one or more infrastructure objects, such as virtual networks, compute           %#
-#%   instances, or higher-level components such as DNS records.                                %#
-#% =========================================================================================== %#
+# ============================================================================================ #
+# resources.tf — Rancher envelope and Helm release resources for Rancher framework              #
+# ============================================================================================ #
 
 
 #region ------ [ Create Rancher Tenant Envelope ] -------------------------------------------- #
 
 resource "rancher2_project" "tenant" {
 
-  // Create the Rancher project that owns the tenant namespace.
+  # Create the Rancher project that owns the tenant namespace.
   name        = var.project_name
   cluster_id  = var.cluster_id
   description = var.project_description
@@ -59,7 +55,7 @@ resource "rancher2_project" "tenant" {
 
 resource "rancher2_namespace" "tenant" {
 
-  // Create the tenant namespace under the Rancher project with PSA labels fixed on.
+  # Create the tenant namespace under the Rancher project with PSA labels fixed on.
   name        = var.namespace_name
   project_id  = rancher2_project.tenant.id
   description = "Tenant namespace managed by the NWarila Rancher Terraform framework."
@@ -93,7 +89,7 @@ resource "rancher2_namespace" "tenant" {
 
 resource "rancher2_project_role_template_binding" "tenant_reconciler" {
 
-  // Bind the tenant reconcile identity to an existing platform-owned role template.
+  # Bind the tenant reconcile identity to an existing platform-owned role template.
   name               = "${var.namespace_name}-tenant-reconciler"
   project_id         = rancher2_project.tenant.id
   role_template_id   = var.tenant_reconciler_role_template_id
@@ -111,7 +107,7 @@ resource "rancher2_project_role_template_binding" "tenant_reconciler" {
 
 resource "helm_release" "tenant" {
 
-  // Deploy the tenant-owned chart into the framework-created namespace.
+  # Deploy the tenant-owned chart into the framework-created namespace.
   name              = var.release_name
   chart             = local.chart_path
   namespace         = rancher2_namespace.tenant.name

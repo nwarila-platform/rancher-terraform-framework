@@ -28,13 +28,14 @@ rule "terraform_unused_declarations" {
   enabled = true
 }
 
-# Rancher and AWS framework modules intentionally use numbered house-style
-# Terraform files instead of canonical main.tf/variables.tf/outputs.tf.
+# Rancher framework modules intentionally use the packer-limited semantic file
+# layout instead of canonical main.tf/variables.tf/outputs.tf.
 rule "terraform_standard_module_structure" {
   enabled = false
 }
 
-# The house style uses // comments inside HCL, matching aws-terraform-framework.
+# The packer-limited house style uses # comments and #region markers across
+# Terraform and Packer HCL.
 rule "terraform_comment_syntax" {
   enabled = false
 }

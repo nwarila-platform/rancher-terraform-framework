@@ -11,7 +11,8 @@ verify`, rather than standalone jobs:
 
 | Layer | Where it runs | What it proves |
 | --- | --- | --- |
-| Terraform module | `terraform verify` job → `python tools/verify.py verify` | `fmt`, `init`, `validate`, TFLint, `terraform test`, source-aware OPA, the documented `opa-plan` compatibility no-op, docs drift, and integration all pass. |
+| Terraform module | `terraform verify` job → `python tools/verify.py verify` | `fmt`, `init`, `validate`, TFLint, `terraform test`, chart schema validation, source-aware OPA, the documented `opa-plan` compatibility no-op, docs drift, and integration all pass. |
+| Chart schema gate | `python tools/verify.py chart-schema` | The golden chart default render, golden chart all-conditionals render, compliant fixture, and hostile fixture are Kubernetes-schema valid with kubeconform. VSO `VaultStaticSecret` is checked with a pinned CRD schema location. |
 | Terraform plan policy | `python tools/verify.py opa-plan` | Static OPA-on-plan is retired by ADR-repo/0008. Framework-specific Rancher envelope assertions live in `terraform test`; workload security lives in chart render gates and admission. |
 | Template manifest | sub-step of `python tools/verify.py verify` | The template-tier scaffold manifest loads and every source path exists. |
 | YAML data | sub-step of `python tools/verify.py verify` | Workflow YAML is valid and consistently shaped (yamllint). |

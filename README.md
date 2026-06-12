@@ -22,11 +22,11 @@ Run the local quality gate before changing framework sources:
 make ci
 ```
 
-The CI path runs Terraform formatting, init, validation, tests, TFLint,
-terraform-docs drift detection, documentation layout checks, and the repo's OPA
-policy target. Rancher-specific integration coverage will be added through a
-disposable CI-managed Rancher environment rather than long-lived external
-credentials.
+The CI path runs Terraform formatting, init, validation, tests, TFLint, Helm
+chart schema validation, terraform-docs drift detection, documentation layout
+checks, and the repo's OPA policy target. Rancher-specific integration coverage
+will be added through a disposable CI-managed Rancher environment rather than
+long-lived external credentials.
 
 ## Documentation
 

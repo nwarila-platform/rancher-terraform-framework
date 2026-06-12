@@ -11,6 +11,7 @@ import shlex
 import subprocess
 import sys
 import time
+import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
@@ -21,6 +22,29 @@ YAMLLINT_CONFIG = (
     "{ extends: relaxed, rules: { line-length: disable, document-start: disable, "
     "comments: disable, truthy: {check-keys: false} } }"
 )
+VSO_CRD_SCHEMA_LOCATION = (
+    "https://raw.githubusercontent.com/datreeio/CRDs-catalog/"
+    "5f127a5ac3655e83d40f7ad8d4b7392c89e36b38/"
+    "{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
+)
+PLATFORM_WORKLOAD_CONDITIONAL_VALUES = """\
+platform:
+  vault_secret_references:
+    app:
+      path: apps/example
+      engine: kv-v2
+      version: 1
+      templates:
+        DATABASE_URL: '{{ .Secrets.database_url }}'
+  persistent_storage:
+    size: 1Gi
+    storage_class: standard
+    mount_path: /data
+  escape_hatches:
+    api_access_service_account_token: true
+    net_bind_service: true
+    persistent_storage: true
+"""
 
 
 Step = Callable[[], None]
@@ -241,6 +265,97 @@ def workflow_bom_check() -> None:
     print("workflow BOM check passed")
 
 
+def assert_render_contains(
+    case: str,
+    rendered: str,
+    required_snippets: tuple[str, ...],
+) -> None:
+    missing = [snippet for snippet in required_snippets if snippet not in rendered]
+    if missing:
+        formatted = ", ".join(repr(snippet) for snippet in missing)
+        raise SystemExit(f"{case} render is missing expected schema-gate coverage: {formatted}")
+
+
+def chart_schema() -> None:
+    helm = command_from_env("HELM", "helm")
+    kubeconform = command_from_env("KUBECONFORM", "kubeconform")
+    schema_location = os.environ.get(
+        "KUBECONFORM_VSO_SCHEMA_LOCATION",
+        VSO_CRD_SCHEMA_LOCATION,
+    )
+
+    cases: tuple[tuple[str, str, str, str | None, tuple[str, ...]], ...] = (
+        (
+            "platform-workload-default",
+            "platform-workload-schema-default",
+            "charts/platform-workload",
+            None,
+            (),
+        ),
+        (
+            "platform-workload-all-conditionals",
+            "platform-workload-schema-all",
+            "charts/platform-workload",
+            "platform-workload-all-conditionals.yaml",
+            (
+                "kind: VaultStaticSecret",
+                "kind: PersistentVolumeClaim",
+                "automountServiceAccountToken: true",
+                "- NET_BIND_SERVICE",
+            ),
+        ),
+        (
+            "compliant-fixture",
+            "compliant-schema",
+            "tests/fixtures/charts/compliant",
+            None,
+            ("kind: Deployment\n", "kind: Service\n"),
+        ),
+        (
+            "hostile-fixture",
+            "hostile-schema",
+            "tests/fixtures/charts/hostile",
+            None,
+            (
+                "kind: Deployment\n",
+                "kind: Service\n",
+                "type: LoadBalancer",
+                "kind: Role\n",
+                "kind: RoleBinding\n",
+                "kind: Secret\n",
+                "hostPath:",
+            ),
+        ),
+    )
+
+    with tempfile.TemporaryDirectory(prefix="chart-schema-") as tmp:
+        tmpdir = Path(tmp)
+        values_file = tmpdir / "platform-workload-all-conditionals.yaml"
+        values_file.write_text(PLATFORM_WORKLOAD_CONDITIONAL_VALUES, encoding="utf-8")
+
+        for case, release, chart, values_name, required_snippets in cases:
+            print(f"chart-schema: {case}", flush=True)
+            helm_args = [*helm, "template", release, chart]
+            if values_name is not None:
+                helm_args.extend(["--values", str(tmpdir / values_name)])
+
+            rendered = capture(helm_args)
+            assert_render_contains(case, rendered, required_snippets)
+            run(
+                [
+                    *kubeconform,
+                    "-strict",
+                    "-schema-location",
+                    "default",
+                    "-schema-location",
+                    schema_location,
+                    "-verbose",
+                    "-summary",
+                ],
+                input_text=rendered,
+            )
+
+
 def build_steps(case: str) -> dict[str, Step]:
     shell_helpers = sorted(
         path.relative_to(ROOT).as_posix() for path in (ROOT / "tools" / "ci").glob("*.sh")
@@ -299,6 +414,7 @@ def build_steps(case: str) -> dict[str, Step]:
         "test": terraform_test,
         "workflow-helper-tests": workflow_helper_tests,
         "workflow-bom-check": workflow_bom_check,
+        "chart-schema": chart_schema,
         "privileged-workflows": privileged_workflows,
         "opa-test": lambda: run_opa(["opa", "test", "policies/opa"]),
         "opa-policy": opa_policy,
@@ -334,6 +450,7 @@ TARGETS: dict[str, tuple[str, ...]] = {
         "actionlint",
         "workflow-bom-check",
         "test",
+        "chart-schema",
         "workflow-helper-tests",
         "privileged-workflows",
         "policy",

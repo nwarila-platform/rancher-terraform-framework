@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Install pinned CI tools (actionlint, tflint, terraform-docs, opa) on a Linux x86_64 runner.
+# Install pinned CI tools (actionlint, kubeconform, tflint, terraform-docs, opa)
+# on a Linux x86_64 runner.
 #
 # Versions are passed via env vars so Renovate can update them in one place.
 # Each downloaded binary archive is verified against the upstream-published
@@ -114,6 +115,29 @@ install_actionlint() {
   "${bindir}/actionlint" -version
 }
 
+install_kubeconform() {
+  local v="$KUBECONFORM_VERSION"
+  local tar="kubeconform-linux-amd64.tar.gz"
+  local sums="CHECKSUMS"
+  local base="https://github.com/yannh/kubeconform/releases/download/v${v}"
+
+  curl --fail --silent --show-error --location -o "${workdir}/${tar}" "${base}/${tar}"
+  curl --fail --silent --show-error --location -o "${workdir}/${sums}" "${base}/${sums}"
+
+  local expected
+  expected="$(awk -v f="${tar}" '$2 == f {print $1}' "${workdir}/${sums}")"
+  if [ -z "$expected" ]; then
+    echo "error: ${tar} not found in kubeconform ${sums}" >&2
+    exit 1
+  fi
+
+  verify_sha256 "${workdir}/${tar}" "$expected"
+  mkdir -p "${workdir}/kubeconform"
+  tar -xzf "${workdir}/${tar}" -C "${workdir}/kubeconform"
+  install -m 0755 "${workdir}/kubeconform/kubeconform" "${bindir}/kubeconform"
+  "${bindir}/kubeconform" -v
+}
+
 install_markdownlint_cli2() {
   local v="$MARKDOWNLINT_CLI2_VERSION"
   local prefix="${HOME}/.local/markdownlint-cli2"
@@ -125,6 +149,7 @@ install_markdownlint_cli2() {
 }
 
 require_var ACTIONLINT_VERSION
+require_var KUBECONFORM_VERSION
 require_var MARKDOWNLINT_CLI2_VERSION
 require_var TFLINT_VERSION
 require_var TERRAFORM_DOCS_VERSION
@@ -142,6 +167,7 @@ workdir="$(mktemp -d)"
 trap 'rm -rf "$workdir"' EXIT
 
 install_actionlint
+install_kubeconform
 install_markdownlint_cli2
 install_tflint
 install_terraform_docs

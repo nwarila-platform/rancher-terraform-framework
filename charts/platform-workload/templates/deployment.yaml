@@ -35,6 +35,11 @@ spec:
             - name: http
               containerPort: {{ int .Values.containerPort }}
               protocol: TCP
+          {{- if .Values.platform.persistent_storage }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.platform.persistent_storage.mount_path | quote }}
+          {{- end }}
           {{- with .Values.env }}
           env:
             {{- toYaml . | nindent 12 }}
@@ -52,3 +57,9 @@ spec:
               {{- end }}
             readOnlyRootFilesystem: true
             runAsNonRoot: true
+      {{- if .Values.platform.persistent_storage }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "platform-workload.fullname" . }}-data
+      {{- end }}

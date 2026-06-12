@@ -1,0 +1,15 @@
+{{- if .Values.platform.persistent_storage }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "platform-workload.fullname" . }}-data
+  labels:
+    {{- include "platform-workload.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.platform.persistent_storage.size | quote }}
+  storageClassName: {{ .Values.platform.persistent_storage.storage_class | quote }}
+{{- end }}

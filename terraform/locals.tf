@@ -15,6 +15,41 @@ locals {
 }
 
 
+# Validation Helper LOCALS
+locals {
+  cpu_quantity_pattern    = "^(0\\.[0-9]{1,3}|[1-9][0-9]*(\\.[0-9]{1,3})?|[1-9][0-9]*m)$"
+  memory_quantity_pattern = "^[1-9][0-9]*(Mi|Gi)$"
+
+  platform_cap_cpu_millicores = {
+    max_request = try(
+      endswith(var.platform_caps.max_cpu_request, "m")
+      ? tonumber(trimsuffix(var.platform_caps.max_cpu_request, "m"))
+      : tonumber(var.platform_caps.max_cpu_request) * 1000,
+      -1
+    )
+    max_limit = try(
+      endswith(var.platform_caps.max_cpu_limit, "m")
+      ? tonumber(trimsuffix(var.platform_caps.max_cpu_limit, "m"))
+      : tonumber(var.platform_caps.max_cpu_limit) * 1000,
+      -1
+    )
+  }
+
+  platform_cap_memory_mib = {
+    max_request = try(
+      tonumber(trimsuffix(trimsuffix(var.platform_caps.max_memory_request, "Mi"), "Gi")) *
+      (endswith(var.platform_caps.max_memory_request, "Gi") ? 1024 : 1),
+      -1
+    )
+    max_limit = try(
+      tonumber(trimsuffix(trimsuffix(var.platform_caps.max_memory_limit, "Mi"), "Gi")) *
+      (endswith(var.platform_caps.max_memory_limit, "Gi") ? 1024 : 1),
+      -1
+    )
+  }
+}
+
+
 # Dynamically Configured LOCALS
 locals {
 

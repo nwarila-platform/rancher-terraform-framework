@@ -19,6 +19,9 @@ locals {
 locals {
   cpu_quantity_pattern    = "^(0\\.[0-9]{1,3}|[1-9][0-9]*(\\.[0-9]{1,3})?|[1-9][0-9]*m)$"
   memory_quantity_pattern = "^[1-9][0-9]*(Mi|Gi)$"
+  rfc1123_dns_subdomain_pattern = (
+    "^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?)*$"
+  )
 
   platform_cap_cpu_millicores = {
     max_request = try(

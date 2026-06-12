@@ -1,0 +1,55 @@
+# Tenant-facing values.
+# These keys are owned by the tenant chart and may be overridden through
+# all_workloads[*].values. Do not put raw secret values here; use the framework
+# vault_secret_references contract instead.
+image:
+  repository: ghcr.io/nwarila-platform/platform-workload-example
+  digest: "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+  pullPolicy: IfNotPresent
+
+containerPort: 8080
+
+# Optional non-secret environment variables for the workload container.
+env: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Framework-injected values.
+# Terraform injects the top-level platform key from locals.workloads[*].helm_values.
+# Tenants must not set platform directly in all_workloads[*].values.
+# This example exists so helm lint/template work before the chart is copied into a
+# tenant repo and rendered by Terraform.
+platform:
+  ingress:
+    host: example.invalid
+    path: /
+  replicas: 2
+  hpa:
+    enabled: true
+    min_replicas: 2
+    max_replicas: 4
+    target_cpu_utilization_percentage: 70
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  vault_secret_references: {}
+  persistent_storage: null
+  escape_hatches:
+    api_access_service_account_token: false
+    net_bind_service: false
+    persistent_storage: false
+  platform_caps:
+    max_replicas: 10
+    max_hpa_replicas: 10
+    max_cpu_request: 500m
+    max_cpu_limit: 1000m
+    max_memory_request: 512Mi
+    max_memory_limit: 1Gi
+    max_persistent_storage_size: 10Gi
+    allowed_storage_classes:
+      - standard

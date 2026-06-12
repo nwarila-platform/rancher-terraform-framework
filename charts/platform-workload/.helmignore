@@ -1,0 +1,15 @@
+# Git and VCS metadata
+.git/
+.gitignore
+.hg/
+.svn/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+*.bak
+*.orig
+.idea/
+.vscode/

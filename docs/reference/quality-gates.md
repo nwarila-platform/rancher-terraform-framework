@@ -20,7 +20,7 @@ role and explains the few places where `continue-on-error` is allowed.
 | --- | --- | --- | --- |
 | actionlint | `ci.yaml` job `actionlint` | Blocking | Workflow YAML/expression validation. |
 | workflow-helper-tests | `ci.yaml` job `workflow-helper-tests` | Blocking | ShellCheck on `tools/ci/*.sh`, Python input-binding checks, Bats coverage. |
-| terraform verify (`verify.py verify`) | `ci.yaml` job `terraform-ci` | Blocking | Wraps fmt, init, validate, tflint, `terraform test`, OPA (test + source + plan), `privileged-workflows`, docs-diff, docs-layout, ADR schema, manifest, integration. |
+| terraform verify (`verify.py verify`) | `ci.yaml` job `terraform-ci` | Blocking | Wraps fmt, init, validate, tflint, `terraform test`, OPA tests and source policy, the documented `opa-plan` compatibility no-op, `privileged-workflows`, docs-diff, docs-layout, ADR schema, manifest, integration. |
 | privileged-workflows | `verify.py ci` (via `verify.py verify`) | Blocking | `check_privileged_workflows.py` + fixture-driven test runner. Rejects `actions/checkout` and PR-controlled refs in any `pull_request_target` workflow, transitively through local reusables. |
 | markdownlint | `ci.yaml` job `markdownlint` | Blocking | Docs hygiene. |
 | drift-gate | `drift-gate.yaml` | Blocking | Verifies the org-baseline overlay matches `NWarila/.github` at the pinned source ref. |

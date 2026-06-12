@@ -3,7 +3,8 @@
 # Encodes repository-level invariants that are visible from source files:
 # workflow `uses:` SHA-pinning, privileged-trigger boundaries, exact
 # `required_version` pins in versions.tf, and exact `=` operator on provider
-# versions. Terraform plan-aware policy belongs in a separate package.
+# versions. Terraform plan-aware policy is intentionally retired here by
+# ADR-repo/0008.
 #
 # Rules trace to:
 #   - template-tier ADR-template/0001 in the owning Terraform template

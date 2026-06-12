@@ -10,7 +10,9 @@ metadata:
   labels:
     {{- include "platform-workload.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.platform.hpa.enabled }}
   replicas: {{ int .Values.platform.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "platform-workload.selectorLabels" . | nindent 6 }}

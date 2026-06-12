@@ -1,0 +1,22 @@
+{{- $pdb := default dict .Values.pdb -}}
+{{- $pdbEnabled := true -}}
+{{- if hasKey $pdb "enabled" -}}
+{{- $pdbEnabled = $pdb.enabled -}}
+{{- end -}}
+{{- if $pdbEnabled }}
+{{- $maxUnavailable := 1 -}}
+{{- if hasKey $pdb "maxUnavailable" -}}
+{{- $maxUnavailable = $pdb.maxUnavailable -}}
+{{- end }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "platform-workload.fullname" . }}
+  labels:
+    {{- include "platform-workload.labels" . | nindent 4 }}
+spec:
+  maxUnavailable: {{ $maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- include "platform-workload.selectorLabels" . | nindent 6 }}
+{{- end }}

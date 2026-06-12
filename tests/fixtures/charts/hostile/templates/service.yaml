@@ -1,0 +1,18 @@
+# DELIBERATELY NON-COMPLIANT FIXTURE — for negative policy testing only; never deploy.
+apiVersion: v1
+kind: Service
+metadata:
+  name: hostile-fixture
+  labels:
+    app.kubernetes.io/name: hostile-fixture
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: hostile-fixture
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  ports:
+    - name: http
+      port: {{ int .Values.service.port }}
+      targetPort: http
+      protocol: TCP

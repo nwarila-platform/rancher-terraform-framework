@@ -7,7 +7,7 @@
 
 resource "rancher2_project" "tenant" {
 
-  # Create the Rancher project that owns the tenant namespace.
+  # Create the Rancher project that owns the tenant namespaces.
   name        = var.project_name
   cluster_id  = var.cluster_id
   description = var.project_description
@@ -53,12 +53,13 @@ resource "rancher2_project" "tenant" {
 
 }
 
-resource "rancher2_namespace" "tenant" {
+resource "rancher2_namespace" "workload" {
+  for_each = local.workloads
 
-  # Create the tenant namespace under the Rancher project with PSA labels fixed on.
-  name        = var.namespace_name
+  # Create each workload namespace under the Rancher project with PSA labels fixed on.
+  name        = each.value.namespace_name
   project_id  = rancher2_project.tenant.id
-  description = "Tenant namespace managed by the NWarila Rancher Terraform framework."
+  description = "Tenant workload namespace ${each.key} managed by the NWarila Rancher Terraform framework."
   labels      = local.namespace_psa_labels
 
   resource_quota {
@@ -90,7 +91,7 @@ resource "rancher2_namespace" "tenant" {
 resource "rancher2_project_role_template_binding" "tenant_reconciler" {
 
   # Bind the tenant reconcile identity to an existing platform-owned role template.
-  name               = "${var.namespace_name}-tenant-reconciler"
+  name               = "${var.project_name}-tenant-reconciler"
   project_id         = rancher2_project.tenant.id
   role_template_id   = var.tenant_reconciler_role_template_id
   group_id           = var.tenant_reconciler_principal.group_id
@@ -105,13 +106,14 @@ resource "rancher2_project_role_template_binding" "tenant_reconciler" {
 
 #region ------ [ Deploy Tenant-Owned Local Chart ] ------------------------------------------- #
 
-resource "helm_release" "tenant" {
+resource "helm_release" "workload" {
+  for_each = local.workloads
 
-  # Deploy the tenant-owned chart into the framework-created namespace.
-  name              = var.release_name
-  chart             = local.chart_path
-  namespace         = rancher2_namespace.tenant.name
-  values            = local.helm_values
+  # Deploy each tenant-owned chart into its framework-created namespace.
+  name              = each.value.release_name
+  chart             = each.value.chart_path
+  namespace         = rancher2_namespace.workload[each.key].name
+  values            = each.value.helm_values
   create_namespace  = false
   skip_crds         = true
   disable_crd_hooks = true
@@ -119,6 +121,7 @@ resource "helm_release" "tenant" {
   wait              = true
 
   depends_on = [
+    rancher2_project.tenant,
     rancher2_project_role_template_binding.tenant_reconciler
   ]
 

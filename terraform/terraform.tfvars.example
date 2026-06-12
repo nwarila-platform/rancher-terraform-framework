@@ -8,69 +8,111 @@ helm_kubernetes = {
   config_path = "./.generated/downstream-kubeconfig.yaml"
 }
 
-cluster_id                          = "c-example"
-project_name                        = "example-tenant"
-namespace_name                      = "example-tenant"
-release_name                        = "example-workload"
-tenant_reconciler_role_template_id  = "nwarila-tenant-reconciler"
+cluster_id                         = "c-example"
+project_name                       = "example-tenant"
+tenant_reconciler_role_template_id = "nwarila-tenant-reconciler"
 tenant_reconciler_principal = {
   group_principal_id = "local://tenant-reconcilers"
 }
 
-ingress = {
-  host = "app.example.invalid"
-  path = "/"
-}
+all_workloads = [
+  {
+    key            = "web"
+    namespace_name = "example-web"
+    release_name   = "example-web"
+    chart_path     = "./chart"
 
-replicas = 2
+    ingress = {
+      host = "web.example.invalid"
+      path = "/"
+    }
 
-hpa = {
-  enabled                           = true
-  min_replicas                      = 2
-  max_replicas                      = 4
-  target_cpu_utilization_percentage = 70
-}
+    replicas = 2
 
-resources = {
-  requests = {
-    cpu    = "100m"
-    memory = "128Mi"
-  }
-  limits = {
-    cpu    = "500m"
-    memory = "512Mi"
-  }
-}
+    hpa = {
+      enabled                           = true
+      min_replicas                      = 2
+      max_replicas                      = 4
+      target_cpu_utilization_percentage = 70
+    }
 
-vault_secret_references = {
-  app_config = {
-    path   = "kv/data/tenants/example/app-config"
-    engine = "kv-v2"
-    templates = {
-      APP_CONFIG_PATH = "config.json"
+    resources = {
+      requests = {
+        cpu    = "100m"
+        memory = "128Mi"
+      }
+      limits = {
+        cpu    = "500m"
+        memory = "512Mi"
+      }
+    }
+
+    vault_secret_references = {
+      app_config = {
+        path   = "kv/data/tenants/example/web-config"
+        engine = "kv-v2"
+        templates = {
+          APP_CONFIG_PATH = "config.json"
+        }
+      }
+    }
+
+    # Escape hatch 1: allow one workload-specific service account token mount.
+    # Escape hatch 2: allow NET_BIND_SERVICE only.
+    escape_hatches = {
+      api_access_service_account_token = false
+      net_bind_service                 = false
+    }
+
+    # Escape hatch 3: enable only when persistent storage is required.
+    persistent_storage = {
+      size          = "5Gi"
+      storage_class = "standard"
+      mount_path    = "/data"
+    }
+
+    values = {
+      workload = {
+        image = {
+          repository = "registry.example.invalid/example/web"
+          digest     = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    }
+  },
+  {
+    key            = "worker"
+    namespace_name = "example-worker"
+    release_name   = "example-worker"
+
+    ingress = {
+      host = "worker.example.invalid"
+      path = "/jobs"
+    }
+
+    replicas = 1
+
+    resources = {
+      requests = {
+        cpu    = "100m"
+        memory = "128Mi"
+      }
+      limits = {
+        cpu    = "500m"
+        memory = "512Mi"
+      }
+    }
+
+    vault_secret_references = {}
+    escape_hatches          = {}
+
+    values = {
+      workload = {
+        image = {
+          repository = "registry.example.invalid/example/worker"
+          digest     = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+        }
+      }
     }
   }
-}
-
-# Escape hatch 1: allow one workload-specific service account token mount.
-# Keep false unless the workload genuinely needs Kubernetes API access.
-escape_hatches = {
-  api_access_service_account_token = false
-  net_bind_service                 = false # Escape hatch 2: allow NET_BIND_SERVICE only.
-}
-
-# Escape hatch 3: enable only when persistent storage is required.
-persistent_storage = {
-  size          = "5Gi"
-  storage_class = "standard"
-  mount_path    = "/data"
-}
-
-values = {
-  workload = {
-    image = {
-      repository = "registry.example.invalid/example/app"
-      digest     = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
-    }
-  }
-}
+]

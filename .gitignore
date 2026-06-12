@@ -44,6 +44,7 @@
 !/docs/how-to/develop-this-module.md
 !/docs/reference/
 !/docs/reference/.gitkeep
+!/docs/reference/terraform.md
 !/docs/reference/invariants.md
 !/docs/reference/mirroring.md
 !/docs/reference/quality-gates.md
@@ -89,6 +90,22 @@
 !/policies/opa/repo_hygiene_test.rego
 !/policies/opa/terraform_plan.rego
 !/policies/opa/terraform_plan_test.rego
+
+!/terraform/
+!/terraform/.terraform.lock.hcl
+!/terraform/00-providers.tf
+!/terraform/02-provider-rancher2.tf
+!/terraform/04-provider-helm.tf
+!/terraform/10-variables.tf
+!/terraform/12-variables-rancher.tf
+!/terraform/32-locals-rancher.tf
+!/terraform/50-resources.tf
+!/terraform/60-outputs.tf
+!/terraform/backend.hcl
+!/terraform/terraform.tfvars.example
+!/terraform/tests/
+!/terraform/tests/envelope.tftest.hcl
+!/terraform/tests/helm-release.tftest.hcl
 
 !/tools/
 !/tools/build_opa_input.py

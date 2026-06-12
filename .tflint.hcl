@@ -28,6 +28,17 @@ rule "terraform_unused_declarations" {
   enabled = true
 }
 
+# Rancher and AWS framework modules intentionally use numbered house-style
+# Terraform files instead of canonical main.tf/variables.tf/outputs.tf.
+rule "terraform_standard_module_structure" {
+  enabled = false
+}
+
+# The house style uses // comments inside HCL, matching aws-terraform-framework.
+rule "terraform_comment_syntax" {
+  enabled = false
+}
+
 # Module-style frameworks prefer documentation comments over inline
 # descriptions on every variable; the `terraform_documented_outputs`
 # rule already enforces output descriptions, which is the more useful

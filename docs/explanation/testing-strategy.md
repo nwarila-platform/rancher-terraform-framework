@@ -12,7 +12,7 @@ verify`, rather than standalone jobs:
 | Layer | Where it runs | What it proves |
 | --- | --- | --- |
 | Terraform module | `terraform verify` job → `python tools/verify.py verify` | `fmt`, `init`, `validate`, TFLint, `terraform test`, source-aware OPA, plan-aware OPA, docs drift, and integration all pass. |
-| Terraform plan policy | sub-step of `python tools/verify.py verify` | `terraform_plan` evaluates a real multi-environment `terraform plan` produced from the example fixture. Framework-specific resource assertions live in `terraform test`. |
+| Terraform plan policy | Step 3+ sub-step of `python tools/verify.py verify` | `terraform_plan` is deferred until the Rancher envelope/input OPA fixture exists. Step 2 keeps `opa-plan` wired but skipped rather than running the inherited template example. Framework-specific resource assertions live in `terraform test`. |
 | Template manifest | sub-step of `python tools/verify.py verify` | The template-tier scaffold manifest loads and every source path exists. |
 | YAML data | sub-step of `python tools/verify.py verify` | Workflow YAML is valid and consistently shaped (yamllint). |
 | Documentation layout | sub-step of `python tools/verify.py verify` | Markdown stays inside the Diataxis and ADR directory structure (docs-layout). |

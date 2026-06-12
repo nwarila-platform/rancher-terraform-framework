@@ -55,7 +55,7 @@ It does not own runner inventory data. Runner repos keep `repos/public/` and `re
 
 Derivative frameworks replace the synthetic providers, resources, repo-specific docs, and deploy pins while preserving the command surface:
 
-- `python tools/verify.py ci` proves formatting, init, validate, TFLint, tests, OPA policy, docs, and manifest health.
+- `python tools/verify.py ci` proves formatting, init, validate, TFLint, tests, Helm chart schema validation, OPA policy, docs, and manifest health.
 - `python tools/verify.py integration` assembles an ephemeral framework workspace from `terraform/` plus an example tfvars file and runs the Terraform-facing gates.
 - Runner repos call this framework's deploy reusable with a pinned `framework_ref` and explicit overlay paths. Pull requests normally use the local backend for plan-only validation. Trusted `main` deploys can opt into the caller-supplied S3 backend mode to prove OIDC, locking, apply, and remote state verification.
 
@@ -65,4 +65,4 @@ The reference framework's own validation intentionally uses a local backend so t
 
 - [`NWarila/.github`](https://github.com/NWarila/.github) provides org-baseline ADR masters mirrored under `docs/decision-records/org/`.
 - [`NWarila/drift-gate`](https://github.com/NWarila/drift-gate) enforces byte-identical mirrors for org and template baseline files.
-- Terraform, TFLint, OPA, and terraform-docs form the local and CI validation toolchain.
+- Terraform, Helm, kubeconform, TFLint, OPA, and terraform-docs form the local and CI validation toolchain.

@@ -22,6 +22,7 @@ spec:
         {{- include "platform-workload.labels" . | nindent 8 }}
     spec:
       automountServiceAccountToken: {{ default false .Values.platform.escape_hatches.api_access_service_account_token }}
+      serviceAccountName: {{ include "platform-workload.serviceAccountName" . }}
       securityContext:
         runAsNonRoot: true
         seccompProfile:

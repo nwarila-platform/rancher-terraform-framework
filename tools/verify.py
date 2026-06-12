@@ -197,54 +197,11 @@ def opa_policy() -> None:
 
 
 def opa_plan() -> None:
-    fixture = ROOT / "examples" / "multi-environment" / "terraform.tfvars.example"
-    if not fixture.is_file():
-        print(
-            "opa-plan skipped: Rancher plan-policy fixture is deferred to Step 3 "
-            f"({fixture.relative_to(ROOT).as_posix()} not present)",
-            flush=True,
-        )
-        return
-
-    plan_dir = ROOT / ".tmp" / "opa-plan"
-    plan_dir.mkdir(parents=True, exist_ok=True)
-    plan_path = "../.tmp/opa-plan/framework-plan.tfplan"
-
-    run(
-        [
-            "terraform",
-            "-chdir=terraform",
-            "init",
-            "-backend=false",
-            "-input=false",
-        ]
-    )
-    run(
-        [
-            "terraform",
-            "-chdir=terraform",
-            "plan",
-            "-input=false",
-            "-out",
-            plan_path,
-            f"-var-file=../{fixture.relative_to(ROOT).as_posix()}",
-        ]
-    )
-    plan_json = capture(["terraform", "-chdir=terraform", "show", "-json", plan_path])
-    opa_input = capture([PYTHON, "tools/build_plan_input.py"], input_text=plan_json)
-    run_opa(
-        [
-            "opa",
-            "eval",
-            "--fail-defined",
-            "--format",
-            "pretty",
-            "--stdin-input",
-            "--data",
-            "policies/opa",
-            "data.terraform_plan.deny[_]",
-        ],
-        input_text=opa_input,
+    print(
+        "opa-plan retired: ADR-repo/0008 records that Rancher envelope "
+        "invariants are enforced by Terraform validation and terraform test; "
+        "workload security is enforced by chart render gates and admission.",
+        flush=True,
     )
 
 

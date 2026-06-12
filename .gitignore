@@ -85,13 +85,12 @@
 !/docs/decision-records/repo/0005-validate-with-ephemeral-rancher-ci.md
 !/docs/decision-records/repo/0006-use-all-workloads-tenant-contract.md
 !/docs/decision-records/repo/0007-adopt-packer-limited-hcl-style.md
+!/docs/decision-records/repo/0008-retire-static-terraform-plan-opa.md
 
 !/policies/
 !/policies/opa/
 !/policies/opa/repo_hygiene.rego
 !/policies/opa/repo_hygiene_test.rego
-!/policies/opa/terraform_plan.rego
-!/policies/opa/terraform_plan_test.rego
 
 !/terraform/
 !/terraform/.terraform.lock.hcl

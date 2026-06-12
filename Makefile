@@ -65,8 +65,8 @@ opa-test:
 opa-policy:
 	$(PYTHON) tools/verify.py opa-policy
 
-# OPA plan enforcement. Rancher-specific plan policy is introduced in Step 3;
-# until its example fixture exists, tools/verify.py reports this target skipped.
+# Static OPA-on-plan is intentionally retired for this repo by ADR-repo/0008.
+# Keep the target for template-family command compatibility.
 opa-plan:
 	$(PYTHON) tools/verify.py opa-plan
 

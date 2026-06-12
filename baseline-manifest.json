@@ -268,14 +268,6 @@
       "target": "docs/tutorials/.gitkeep"
     },
     {
-      "source": "policies/opa/terraform_plan.rego",
-      "target": "policies/opa/terraform_plan.rego"
-    },
-    {
-      "source": "policies/opa/terraform_plan_test.rego",
-      "target": "policies/opa/terraform_plan_test.rego"
-    },
-    {
       "source": "release-please-config.json",
       "target": "release-please-config.json"
     },

@@ -5,7 +5,7 @@ PRs to `main` on this template must pass:
 - `actionlint` (workflow syntax)
 - `workflow helper tests` (ShellCheck, workflow input binding checks, and Bats coverage for workflow helpers)
 - `markdownlint` (docs)
-- `terraform verify` (`python tools/verify.py verify`, including Terraform gates, source-aware OPA, plan-aware OPA, lint, docs, manifest, and integration)
+- `terraform verify` (`python tools/verify.py verify`, including Terraform gates, source-aware OPA, the documented `opa-plan` compatibility no-op, lint, docs, manifest, and integration)
 - `org-baseline / verify` (drift-gate against `NWarila/.github` at pinned source-ref)
 - `Trivy (filesystem & secrets)`, `Gitleaks (secret scan)`, `zizmor (Actions security)` (security)
 - `CodeQL` (`security.yaml`)

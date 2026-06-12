@@ -20,12 +20,13 @@ authoritative runtime boundary in the cluster: Pod Security Admission Restricted
 plus Kyverno admission policies, backed by an envelope RBAC allowlist for the
 identity that reconciles tenant charts.
 
-Terraform and OPA remain valuable for early feedback on visible envelope and
-input choices, but they are not the workload security boundary because
+Terraform remains valuable for early feedback on visible envelope and input
+choices, but it is not the workload security boundary because
 `helm_release` does not expose every rendered Kubernetes object as ordinary
-Terraform resources in the plan. Admission is the final boundary because it sees
-requests from Terraform, Helm, kubectl, Rancher UI, future GitOps controllers,
-and any other Kubernetes API producer.
+Terraform resources in the plan. Static OPA-on-plan is retired by
+[ADR-repo/0008](0008-retire-static-terraform-plan-opa.md). Admission is the
+final boundary because it sees requests from Terraform, Helm, kubectl, Rancher
+UI, future GitOps controllers, and any other Kubernetes API producer.
 
 ## Context and Problem Statement
 
@@ -102,7 +103,7 @@ The framework security boundary is:
 | `readOnlyRootFilesystem` | Kyverno validate policy | Golden chart defaults and tenant CI render checks |
 | `automountServiceAccountToken=false` | Kyverno validate policy | Golden chart defaults and tenant CI render checks |
 | Default-deny ingress and egress | Kyverno generate policy on namespace creation | Chart fixtures and integration tests |
-| Resource quota and container defaults | Rancher project/namespace quota and native Kubernetes quota/limits where needed | Terraform validation and OPA on visible envelope |
+| Resource quota and container defaults | Rancher project/namespace quota and native Kubernetes quota/limits where needed | Terraform validation and mocked Terraform tests |
 | Image registry allowlist, digest, and signature verification | Kyverno image verification | Terraform variable validation for digest references and tenant CI |
 | Kind allowlist and dangerous field restrictions | Kyverno validate policy | Reconcile Role allows only approved object kinds |
 | Tenant-created Secrets, RBAC, CRDs, privileged kinds | Kyverno deny policy | Reconcile Role excludes those API groups and resources |
@@ -188,8 +189,9 @@ reconcile the allowed namespaced workload kinds.
    network isolation resource on tenant namespace creation.
 5. The chart reconcile identity MUST be scoped to only the object kinds a tenant
    chart is allowed to manage.
-6. OPA-on-plan MUST remain limited to visible Terraform envelope and input
-   policy unless a later ADR introduces a safe rendered-manifest plan model.
+6. Static OPA-on-plan is retired by ADR-repo/0008; any future plan-level OPA
+   MUST remain limited to visible Terraform envelope and input policy unless a
+   later ADR introduces a safe rendered-manifest plan model.
 7. CI MUST include compliant and hostile fixture charts that prove accepted and
    rejected behavior.
 
@@ -213,9 +215,9 @@ reconcile the allowed namespaced workload kinds.
 
 ### Neutral
 
-- Terraform/OPA remains part of the quality gate, but it is intentionally scoped
-  to the Terraform envelope rather than claiming to inspect every workload
-  object.
+- Terraform validation and source-policy OPA remain part of the quality gate,
+  but static OPA-on-plan is retired rather than claiming to inspect every
+  workload object.
 - The golden chart starter is hardened, but it is a convenience baseline rather
   than the sole enforcement mechanism.
 
@@ -235,7 +237,9 @@ None.
 
 ## Superseded by
 
-None (current).
+ADR-repo/0008 supersedes this ADR's earlier expectation that static OPA-on-plan
+would remain part of the Rancher envelope feedback loop. The tenant-render and
+admission security boundary remains current.
 
 ## Implementing PRs
 

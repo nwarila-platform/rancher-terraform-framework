@@ -19,6 +19,11 @@ locals {
 locals {
   cpu_quantity_pattern    = "^(0\\.[0-9]{1,3}|[1-9][0-9]*(\\.[0-9]{1,3})?|[1-9][0-9]*m)$"
   memory_quantity_pattern = "^[1-9][0-9]*(Mi|Gi)$"
+  values_raw_secret_signal_pattern = (
+    "\"(password|passwd|secret|token|api[-_]?key|private[-_]?key|client[-_]?secret|access[-_]?token|refresh[-_]?token)\"[[:space:]]*:[[:space:]]*\"[^\"]+\""
+  )
+  values_pem_private_key_pattern = "-----begin [a-z0-9 ]*private key-----"
+  vault_secret_reference_engines = ["kv-v1", "kv-v2"]
   rfc1123_dns_subdomain_pattern = (
     "^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?)*$"
   )

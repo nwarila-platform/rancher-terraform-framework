@@ -78,6 +78,133 @@ variable "all_workloads" {
     )
     error_message = "all_workloads must contain at least one workload, and every workload.key must not be empty."
   }
+
+  validation {
+    condition = alltrue([
+      for workload in var.all_workloads :
+      workload.replicas >= 1 &&
+      workload.replicas == floor(workload.replicas) &&
+      workload.replicas <= var.platform_caps.max_replicas
+    ])
+    error_message = "all_workloads[*].replicas must be a whole number between 1 and platform_caps.max_replicas."
+  }
+
+  validation {
+    condition = alltrue([
+      for workload in var.all_workloads :
+      workload.hpa.min_replicas >= 1 &&
+      workload.hpa.min_replicas == floor(workload.hpa.min_replicas) &&
+      workload.hpa.max_replicas >= workload.hpa.min_replicas &&
+      workload.hpa.max_replicas == floor(workload.hpa.max_replicas) &&
+      workload.hpa.max_replicas <= var.platform_caps.max_hpa_replicas &&
+      workload.hpa.target_cpu_utilization_percentage >= 1 &&
+      workload.hpa.target_cpu_utilization_percentage <= 100
+    ])
+    error_message = "all_workloads[*].hpa must use whole min/max replicas with min <= max, max <= platform_caps.max_hpa_replicas, and target_cpu_utilization_percentage between 1 and 100."
+  }
+
+  validation {
+    condition = alltrue([
+      for workload in var.all_workloads :
+      can(regex(local.cpu_quantity_pattern, workload.resources.requests.cpu)) &&
+      can(regex(local.cpu_quantity_pattern, workload.resources.limits.cpu)) &&
+      can(regex(local.memory_quantity_pattern, workload.resources.requests.memory)) &&
+      can(regex(local.memory_quantity_pattern, workload.resources.limits.memory)) &&
+      try(
+        endswith(workload.resources.requests.cpu, "m")
+        ? tonumber(trimsuffix(workload.resources.requests.cpu, "m"))
+        : tonumber(workload.resources.requests.cpu) * 1000,
+        -1
+      ) > 0 &&
+      try(
+        endswith(workload.resources.limits.cpu, "m")
+        ? tonumber(trimsuffix(workload.resources.limits.cpu, "m"))
+        : tonumber(workload.resources.limits.cpu) * 1000,
+        -1
+      ) > 0 &&
+      try(
+        tonumber(trimsuffix(trimsuffix(workload.resources.requests.memory, "Mi"), "Gi")) *
+        (endswith(workload.resources.requests.memory, "Gi") ? 1024 : 1),
+        -1
+      ) > 0 &&
+      try(
+        tonumber(trimsuffix(trimsuffix(workload.resources.limits.memory, "Mi"), "Gi")) *
+        (endswith(workload.resources.limits.memory, "Gi") ? 1024 : 1),
+        -1
+      ) > 0
+    ])
+    error_message = "all_workloads[*].resources must use positive CPU quantities (whole/decimal cores or m) and memory quantities in Mi or Gi."
+  }
+
+  validation {
+    condition = alltrue([
+      for workload in var.all_workloads :
+      can(regex(local.cpu_quantity_pattern, var.platform_caps.max_cpu_request)) &&
+      can(regex(local.cpu_quantity_pattern, var.platform_caps.max_cpu_limit)) &&
+      can(regex(local.memory_quantity_pattern, var.platform_caps.max_memory_request)) &&
+      can(regex(local.memory_quantity_pattern, var.platform_caps.max_memory_limit)) &&
+      (
+        try(
+          endswith(workload.resources.requests.cpu, "m")
+          ? tonumber(trimsuffix(workload.resources.requests.cpu, "m"))
+          : tonumber(workload.resources.requests.cpu) * 1000,
+          -1
+        ) <= local.platform_cap_cpu_millicores.max_request
+      ) &&
+      (
+        try(
+          endswith(workload.resources.limits.cpu, "m")
+          ? tonumber(trimsuffix(workload.resources.limits.cpu, "m"))
+          : tonumber(workload.resources.limits.cpu) * 1000,
+          -1
+        ) <= local.platform_cap_cpu_millicores.max_limit
+      ) &&
+      (
+        try(
+          tonumber(trimsuffix(trimsuffix(workload.resources.requests.memory, "Mi"), "Gi")) *
+          (endswith(workload.resources.requests.memory, "Gi") ? 1024 : 1),
+          -1
+        ) <= local.platform_cap_memory_mib.max_request
+      ) &&
+      (
+        try(
+          tonumber(trimsuffix(trimsuffix(workload.resources.limits.memory, "Mi"), "Gi")) *
+          (endswith(workload.resources.limits.memory, "Gi") ? 1024 : 1),
+          -1
+        ) <= local.platform_cap_memory_mib.max_limit
+      )
+    ])
+    error_message = "all_workloads[*].resources requests and limits must be less than or equal to the matching platform_caps max resource caps."
+  }
+
+  validation {
+    condition = alltrue([
+      for workload in var.all_workloads :
+      try(
+        (
+          endswith(workload.resources.requests.cpu, "m")
+          ? tonumber(trimsuffix(workload.resources.requests.cpu, "m"))
+          : tonumber(workload.resources.requests.cpu) * 1000
+          ) - (
+          endswith(workload.resources.limits.cpu, "m")
+          ? tonumber(trimsuffix(workload.resources.limits.cpu, "m"))
+          : tonumber(workload.resources.limits.cpu) * 1000
+        ),
+        1
+      ) <= 0 &&
+      try(
+        (
+          tonumber(trimsuffix(trimsuffix(workload.resources.requests.memory, "Mi"), "Gi")) *
+          (endswith(workload.resources.requests.memory, "Gi") ? 1024 : 1)
+          ) - (
+          tonumber(trimsuffix(trimsuffix(workload.resources.limits.memory, "Mi"), "Gi")) *
+          (endswith(workload.resources.limits.memory, "Gi") ? 1024 : 1)
+        ),
+        1
+      ) <= 0
+    ])
+    error_message = "all_workloads[*].resources requests must be less than or equal to their matching limits after CPU and memory unit normalization."
+  }
 }
 
 variable "platform_caps" {

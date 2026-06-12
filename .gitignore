@@ -108,6 +108,7 @@
 !/terraform/tests/envelope.tftest.hcl
 !/terraform/tests/helm-release.tftest.hcl
 !/terraform/tests/all-workloads-fanout.tftest.hcl
+!/terraform/tests/caps-validation.tftest.hcl
 
 !/tools/
 !/tools/build_opa_input.py

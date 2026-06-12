@@ -2,7 +2,7 @@ PYTHON ?= python3
 TFLINT ?= tflint
 INTEGRATION_CASE ?= basic
 
-.PHONY: help setup fmt fmt-check init validate tflint ruff yamllint test chart-schema workflow-helper-tests opa-test opa-policy opa-plan manifest-check docs docs-diff docs-layout adr-schema lint policy docs-check integration ci verify
+.PHONY: help setup fmt fmt-check init validate tflint ruff yamllint test chart-schema chart-policy workflow-helper-tests opa-test opa-policy opa-plan manifest-check docs docs-diff docs-layout adr-schema lint policy docs-check integration ci verify
 
 help:
 	@printf "Targets:\\n"
@@ -10,6 +10,7 @@ help:
 	@printf "  lint           Run Terraform, TFLint, Python, and YAML checks\\n"
 	@printf "  test           Run terraform test\\n"
 	@printf "  chart-schema   Render charts and validate Kubernetes schemas\\n"
+	@printf "  chart-policy   Render charts and evaluate Kyverno policies\\n"
 	@printf "  policy         Run OPA tests and policy evaluation\\n"
 	@printf "  docs-check     Check terraform-docs output and docs layout\\n"
 	@printf "  ci             Run the repo-local quality gate\\n"
@@ -53,6 +54,9 @@ test:
 
 chart-schema:
 	$(PYTHON) tools/verify.py chart-schema
+
+chart-policy:
+	$(PYTHON) tools/verify.py chart-policy
 
 workflow-helper-tests:
 	shellcheck tools/ci/*.sh

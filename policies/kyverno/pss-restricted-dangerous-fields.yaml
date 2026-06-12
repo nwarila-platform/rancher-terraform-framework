@@ -1,0 +1,82 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: nwarila-pss-restricted-dangerous-fields
+  annotations:
+    pod-policies.kyverno.io/autogen-controllers: Deployment,DaemonSet,StatefulSet,Job,CronJob
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: enforce-restricted-pod-security
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        failureAction: Enforce
+        message: >-
+          Pods and Pod controllers must satisfy Kubernetes Pod Security
+          Standards Restricted controls. Privileged containers, privilege
+          escalation, host namespaces, hostPath volumes, root execution,
+          missing drop ALL, and capabilities other than NET_BIND_SERVICE are
+          denied. A separate framework rule below tightens seccomp to
+          RuntimeDefault only.
+        podSecurity:
+          level: restricted
+          version: latest
+
+    - name: require-runtime-default-seccomp
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        failureAction: Enforce
+        message: >-
+          Pods and Pod controllers must set seccompProfile.type=RuntimeDefault.
+          Localhost and Unconfined profiles are not part of the framework
+          baseline.
+        pattern:
+          spec:
+            securityContext:
+              seccompProfile:
+                type: RuntimeDefault
+            containers:
+              - =(securityContext):
+                  =(seccompProfile):
+                    type: RuntimeDefault
+            =(initContainers):
+              - =(securityContext):
+                  =(seccompProfile):
+                    type: RuntimeDefault
+            =(ephemeralContainers):
+              - =(securityContext):
+                  =(seccompProfile):
+                    type: RuntimeDefault
+
+    - name: require-read-only-root-filesystem
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        failureAction: Enforce
+        message: >-
+          Containers must set securityContext.readOnlyRootFilesystem=true.
+          Persistent storage must use PVC-backed volumeMounts, not writable
+          container root filesystems.
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  readOnlyRootFilesystem: true
+            =(initContainers):
+              - securityContext:
+                  readOnlyRootFilesystem: true
+            =(ephemeralContainers):
+              - securityContext:
+                  readOnlyRootFilesystem: true

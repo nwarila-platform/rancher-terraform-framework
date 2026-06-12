@@ -150,6 +150,29 @@ variable "all_workloads" {
   validation {
     condition = alltrue([
       for workload in var.all_workloads :
+      workload.persistent_storage == null ? true : (
+        can(regex(local.memory_quantity_pattern, workload.persistent_storage.size)) &&
+        can(regex(local.memory_quantity_pattern, var.platform_caps.max_persistent_storage_size)) &&
+        try(
+          tonumber(trimsuffix(trimsuffix(workload.persistent_storage.size, "Mi"), "Gi")) *
+          (endswith(workload.persistent_storage.size, "Gi") ? 1024 : 1),
+          -1
+        ) > 0 &&
+        try(
+          tonumber(trimsuffix(trimsuffix(workload.persistent_storage.size, "Mi"), "Gi")) *
+          (endswith(workload.persistent_storage.size, "Gi") ? 1024 : 1),
+          -1
+        ) <= local.platform_cap_persistent_storage_mib &&
+        contains(var.platform_caps.allowed_storage_classes, workload.persistent_storage.storage_class) &&
+        startswith(workload.persistent_storage.mount_path, "/")
+      )
+    ])
+    error_message = "all_workloads[*].persistent_storage must use size and platform_caps.max_persistent_storage_size as positive Mi or Gi quantities, keep size <= the platform cap, use an allowed storage_class, and set mount_path starting with /."
+  }
+
+  validation {
+    condition = alltrue([
+      for workload in var.all_workloads :
       workload.replicas >= 1 &&
       workload.replicas == floor(workload.replicas) &&
       workload.replicas <= var.platform_caps.max_replicas

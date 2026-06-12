@@ -55,6 +55,12 @@ locals {
       -1
     )
   }
+
+  platform_cap_persistent_storage_mib = try(
+    tonumber(trimsuffix(trimsuffix(var.platform_caps.max_persistent_storage_size, "Mi"), "Gi")) *
+    (endswith(var.platform_caps.max_persistent_storage_size, "Gi") ? 1024 : 1),
+    -1
+  )
 }
 
 

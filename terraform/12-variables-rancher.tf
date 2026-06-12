@@ -95,6 +95,19 @@ variable "tenant_reconciler_principal" {
     user_principal_id  = optional(string)
   })
   nullable = false
+
+  validation {
+    condition = length([
+      for principal in [
+        var.tenant_reconciler_principal.group_id,
+        var.tenant_reconciler_principal.group_principal_id,
+        var.tenant_reconciler_principal.user_id,
+        var.tenant_reconciler_principal.user_principal_id,
+      ] : principal
+      if principal != null && length(trimspace(principal)) > 0
+    ]) == 1
+    error_message = "tenant_reconciler_principal must set exactly one principal."
+  }
 }
 
 variable "platform_resource_quota" {
@@ -151,4 +164,16 @@ variable "platform_resource_quota" {
   })
   default  = {}
   nullable = false
+
+  validation {
+    condition = (
+      var.platform_resource_quota.project_limit.services_load_balancers == "0" &&
+      var.platform_resource_quota.project_limit.services_node_ports == "0" &&
+      var.platform_resource_quota.namespace_default_limit.services_load_balancers == "0" &&
+      var.platform_resource_quota.namespace_default_limit.services_node_ports == "0" &&
+      var.platform_resource_quota.namespace_limit.services_load_balancers == "0" &&
+      var.platform_resource_quota.namespace_limit.services_node_ports == "0"
+    )
+    error_message = "platform_resource_quota must keep load balancer and node port quotas at 0."
+  }
 }

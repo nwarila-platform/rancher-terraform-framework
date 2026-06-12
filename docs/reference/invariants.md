@@ -5,8 +5,8 @@
 - **Runners own inventory data.** Runner repos provide `repos/` data and call this framework by SHA; they do not mutate the framework source.
 - **Terraform and provider versions are exact pins.** `terraform/00-providers.tf` uses `= X.Y.Z` for the CLI and every provider.
 - **Workflow `uses:` references are SHA-pinned.** Local `./...` reusable calls and digest-pinned docker images are allowed.
-- **Framework plans satisfy resource-level OPA policy once the Rancher plan fixture exists.** `make opa-plan` is wired, but Step 2 skips it until Step 3 replaces the inherited template fixture with Rancher envelope/input policy.
-- **The reference framework remains credential-free.** Synthetic providers are used so tests and integration run without cloud accounts, secrets, or recurring cost.
+- **Framework plans satisfy Rancher envelope/input OPA policy offline.** `make opa-plan` builds a disposable local-backend wrapper from `tests/fixtures/opa-plan/terraform.tfvars`, runs `terraform plan` with bogus `.invalid` endpoints, and evaluates the normalized plan against `policies/opa/terraform_plan.rego`.
+- **The reference framework remains credential-free.** Mocked Terraform tests and offline plan fixtures are used so tests and static policy checks run without cloud accounts, Rancher credentials, Kubernetes credentials, secrets, or recurring cost.
 - **Generated Terraform docs are checked, not trusted.** `docs/reference/terraform.md` must match `terraform-docs` output.
 - **Template-tier baseline entries must declare propagation semantics.** `baseline-manifest.json` is load-bearing for derivative framework drift gates. `byte_identical` entries are mirrored exactly; `scaffold_starter` entries are starter material that derivatives rewrite for their provider surface.
 - **Framework-template ADRs are owned here.** Shared framework decisions live in `docs/decision-records/template/` and are mirrored to derivative frameworks through `baseline-manifest.json`.

@@ -1,196 +1,218 @@
-# terraform_plan - generic Terraform plan-aware policy.
+# terraform_plan - Rancher envelope/input plan-aware policy.
 #
 # This package consumes normalized `terraform show -json tfplan` output from
-# tools/build_plan_input.py. It covers cloud-resource invariants that cannot be
-# proven from static source alone.
+# tools/build_plan_input.py. It is intentionally scoped to the visible
+# Rancher envelope and tenant input surface; workload policy is enforced by
+# tenant chart rendering plus in-cluster PSA/Kyverno admission.
 
 package terraform_plan
 
 import rego.v1
 
-required_tags := ["owner", "environment", "managed_by"]
-
-admin_ports := [22, 2379, 3306, 3389, 5432, 6379, 6443]
-
-stateful_types := {
-	"aws_db_instance",
-	"aws_dynamodb_table",
-	"aws_ebs_volume",
-	"aws_efs_file_system",
-	"aws_elasticache_cluster",
-	"aws_elasticache_replication_group",
-	"aws_rds_cluster",
-	"aws_s3_bucket",
+resource(type, name) := found if {
+	found := input.resources[_]
+	found.type == type
+	found.name == name
 }
 
-tag_exempt_types := {
-	"aws_iam_policy",
-	"aws_iam_policy_document",
-	"aws_iam_role_policy",
-	"aws_iam_role_policy_attachment",
-	"aws_s3_bucket_server_side_encryption_configuration",
-	"aws_security_group_rule",
+has_resource(type, name) if {
+	_ := resource(type, name)
 }
 
-taggable_aws_resource(resource) if {
-	startswith(resource.type, "aws_")
-	not tag_exempt_types[resource.type]
+first_block(item, key) := block if {
+	blocks := object.get(item, key, [])
+	count(blocks) > 0
+	block := blocks[0]
 }
 
-has_wildcard(value) if {
-	value == "*"
+project_quota(name) := quota if {
+	project := resource("rancher2_project", "tenant")
+	resource_quota := first_block(project.values, "resource_quota")
+	quota := first_block(resource_quota, name)
 }
 
-has_wildcard(value) if {
-	is_array(value)
-	value[_] == "*"
+namespace_quota := quota if {
+	namespace := resource("rancher2_namespace", "tenant")
+	resource_quota := first_block(namespace.values, "resource_quota")
+	quota := first_block(resource_quota, "limit")
 }
 
-statement_list(policy) := statements if {
-	raw := object.get(policy, "Statement", [])
-	is_array(raw)
-	statements := raw
+quota_locks_load_balancers_and_node_ports(quota) if {
+	object.get(quota, "services_load_balancers", "") == "0"
+	object.get(quota, "services_node_ports", "") == "0"
 }
 
-statement_list(policy) := [raw] if {
-	raw := object.get(policy, "Statement", {})
-	is_object(raw)
+helm_platform_values := platform if {
+	helm := resource("helm_release", "tenant")
+	values := object.get(helm.values, "values", [])
+	count(values) > 0
+	rendered := yaml.unmarshal(values[0])
+	platform := object.get(rendered, "platform", {})
 }
 
-s3_bucket_name(resource) := name if {
-	name := object.get(resource.values, "bucket", "")
-	name != ""
+cpu_millicores(value) := millicores if {
+	is_string(value)
+	regex.match("^[1-9][0-9]*m$", value)
+	millicores := to_number(trim_suffix(value, "m"))
 }
 
-s3_bucket_name(resource) := resource.name if {
-	object.get(resource.values, "bucket", "") == ""
+memory_mib(value) := mib if {
+	is_string(value)
+	regex.match("^[1-9][0-9]*Mi$", value)
+	mib := to_number(trim_suffix(value, "Mi"))
 }
 
-has_inline_sse(resource) if {
-	config := object.get(resource.values, "server_side_encryption_configuration", null)
-	config != null
+memory_mib(value) := mib if {
+	is_string(value)
+	regex.match("^[1-9][0-9]*Gi$", value)
+	mib := to_number(trim_suffix(value, "Gi")) * 1024
 }
 
-reference_matches_address(ref, address) if {
-	ref == address
+value_within(value, min, max) if {
+	value >= min
+	value <= max
 }
 
-reference_matches_address(ref, address) if {
-	startswith(ref, sprintf("%s.", [address]))
+resources_within_caps(resources, caps) if {
+	request_cpu := cpu_millicores(resources.requests.cpu)
+	limit_cpu := cpu_millicores(resources.limits.cpu)
+	min_request_cpu := cpu_millicores(caps.min_cpu_request)
+	max_request_cpu := cpu_millicores(caps.max_cpu_request)
+	min_limit_cpu := cpu_millicores(caps.min_cpu_limit)
+	max_limit_cpu := cpu_millicores(caps.max_cpu_limit)
+
+	request_memory := memory_mib(resources.requests.memory)
+	limit_memory := memory_mib(resources.limits.memory)
+	min_request_memory := memory_mib(caps.min_memory_request)
+	max_request_memory := memory_mib(caps.max_memory_request)
+	min_limit_memory := memory_mib(caps.min_memory_limit)
+	max_limit_memory := memory_mib(caps.max_memory_limit)
+
+	value_within(request_cpu, min_request_cpu, max_request_cpu)
+	value_within(limit_cpu, min_limit_cpu, max_limit_cpu)
+	request_cpu <= limit_cpu
+	value_within(request_memory, min_request_memory, max_request_memory)
+	value_within(limit_memory, min_limit_memory, max_limit_memory)
+	request_memory <= limit_memory
 }
 
-reference_matches_address(ref, address) if {
-	base := split(address, "[")[0]
-	ref == base
+persistent_storage_within_caps(storage, caps) if {
+	storage == null
 }
 
-reference_matches_address(ref, address) if {
-	base := split(address, "[")[0]
-	startswith(ref, sprintf("%s.", [base]))
+persistent_storage_within_caps(storage, caps) if {
+	storage_size := memory_mib(storage.size)
+	max_size := memory_mib(caps.max_persistent_storage_size)
+	storage_size <= max_size
+	storage_size > 0
+	caps.allowed_storage_classes[_] == storage.storage_class
 }
 
-config_references_bucket(config, resource) if {
-	refs := object.get(object.get(config, "references", {}), "bucket", [])
-	ref := refs[_]
-	reference_matches_address(ref, resource.address)
-}
-
-has_sse_config(resource) if {
-	config := input.resources[_]
-	config.type == "aws_s3_bucket_server_side_encryption_configuration"
-	config_references_bucket(config, resource)
-}
-
-has_sse_config(resource) if {
-	bucket := s3_bucket_name(resource)
-	config := input.resources[_]
-	config.type == "aws_s3_bucket_server_side_encryption_configuration"
-	object.get(config.values, "bucket", "") == bucket
-}
-
-cidr_open_to_world(rule) if {
-	cidrs := object.get(rule, "cidr_blocks", [])
-	cidrs[_] == "0.0.0.0/0"
-}
-
-cidr_open_to_world(rule) if {
-	cidrs := object.get(rule, "ipv6_cidr_blocks", [])
-	cidrs[_] == "::/0"
-}
-
-rule_exposes_port(rule, port) if {
-	from := object.get(rule, "from_port", null)
-	to := object.get(rule, "to_port", null)
-	is_number(from)
-	is_number(to)
-	from <= port
-	to >= port
-}
-
-prevent_destroy_enabled(resource) if {
-	lifecycle := object.get(resource, "lifecycle", {})
-	object.get(lifecycle, "prevent_destroy", false) == true
-}
-
-missing_required_tags(resource) := missing if {
-	tags := object.get(resource.values, "tags", {})
-	missing := {tag |
-		tag := required_tags[_]
-		object.get(tags, tag, "") == ""
+deny contains msg if {
+	required := {
+		"helm_release.tenant": ["helm_release", "tenant"],
+		"rancher2_namespace.tenant": ["rancher2_namespace", "tenant"],
+		"rancher2_project.tenant": ["rancher2_project", "tenant"],
+		"rancher2_project_role_template_binding.tenant_reconciler": [
+			"rancher2_project_role_template_binding",
+			"tenant_reconciler",
+		],
 	}
+	some address, parts in required
+	not has_resource(parts[0], parts[1])
+	msg := sprintf("%s must be planned", [address])
 }
 
 deny contains msg if {
-	resource := input.resources[_]
-	resource.type == "aws_s3_bucket"
-	not has_inline_sse(resource)
-	not has_sse_config(resource)
-	msg := sprintf("%s must have server-side encryption configuration", [resource.address])
+	namespace := resource("rancher2_namespace", "tenant")
+	labels := object.get(namespace.values, "labels", {})
+	object.get(labels, "pod-security.kubernetes.io/enforce", "") != "restricted"
+	msg := sprintf("%s must enforce PSA restricted", [namespace.address])
 }
 
 deny contains msg if {
-	resource := input.resources[_]
-	resource.type == "aws_iam_policy"
-	raw := object.get(resource.values, "policy", "")
-	is_string(raw)
-	policy := json.unmarshal(raw)
-	statement := statement_list(policy)[_]
-	has_wildcard(object.get(statement, "Action", null))
-	has_wildcard(object.get(statement, "Resource", null))
-	msg := sprintf("%s must not allow Action \"*\" on Resource \"*\"", [resource.address])
+	namespace := resource("rancher2_namespace", "tenant")
+	labels := object.get(namespace.values, "labels", {})
+	object.get(labels, "pod-security.kubernetes.io/audit", "") != "restricted"
+	msg := sprintf("%s must audit PSA restricted", [namespace.address])
 }
 
 deny contains msg if {
-	resource := input.resources[_]
-	resource.type == "aws_security_group"
-	rule := object.get(resource.values, "ingress", [])[_]
-	cidr_open_to_world(rule)
-	port := admin_ports[_]
-	rule_exposes_port(rule, port)
-	msg := sprintf("%s must not expose admin port %d to the world", [resource.address, port])
+	namespace := resource("rancher2_namespace", "tenant")
+	labels := object.get(namespace.values, "labels", {})
+	object.get(labels, "pod-security.kubernetes.io/warn", "") != "restricted"
+	msg := sprintf("%s must warn PSA restricted", [namespace.address])
 }
 
 deny contains msg if {
-	resource := input.resources[_]
-	resource.type == "aws_security_group_rule"
-	object.get(resource.values, "type", "") == "ingress"
-	cidr_open_to_world(resource.values)
-	port := admin_ports[_]
-	rule_exposes_port(resource.values, port)
-	msg := sprintf("%s must not expose admin port %d to the world", [resource.address, port])
+	quota := project_quota("project_limit")
+	not quota_locks_load_balancers_and_node_ports(quota)
+	msg := "rancher2_project.tenant project_limit must keep LoadBalancer and NodePort quotas at 0"
 }
 
 deny contains msg if {
-	resource := input.resources[_]
-	stateful_types[resource.type]
-	not prevent_destroy_enabled(resource)
-	msg := sprintf("%s must set lifecycle.prevent_destroy = true", [resource.address])
+	quota := project_quota("namespace_default_limit")
+	not quota_locks_load_balancers_and_node_ports(quota)
+	msg := "rancher2_project.tenant namespace_default_limit must keep LoadBalancer and NodePort quotas at 0"
 }
 
 deny contains msg if {
-	resource := input.resources[_]
-	taggable_aws_resource(resource)
-	missing := missing_required_tags(resource)
-	count(missing) > 0
-	msg := sprintf("%s missing required tags: %v", [resource.address, sort(missing)])
+	quota := namespace_quota
+	not quota_locks_load_balancers_and_node_ports(quota)
+	msg := "rancher2_namespace.tenant limit must keep LoadBalancer and NodePort quotas at 0"
+}
+
+deny contains msg if {
+	helm := resource("helm_release", "tenant")
+	object.get(helm.values, "create_namespace", true) != false
+	msg := sprintf("%s must not create namespaces", [helm.address])
+}
+
+deny contains msg if {
+	helm := resource("helm_release", "tenant")
+	object.get(helm.values, "skip_crds", false) != true
+	msg := sprintf("%s must skip CRDs", [helm.address])
+}
+
+deny contains msg if {
+	helm := resource("helm_release", "tenant")
+	object.get(helm.values, "disable_crd_hooks", false) != true
+	msg := sprintf("%s must disable CRD hooks", [helm.address])
+}
+
+deny contains msg if {
+	helm := resource("helm_release", "tenant")
+	namespace := resource("rancher2_namespace", "tenant")
+	object.get(helm.values, "namespace", "") != object.get(namespace.values, "name", "")
+	msg := sprintf("%s must target the Rancher-created namespace", [helm.address])
+}
+
+deny contains msg if {
+	platform := helm_platform_values
+	platform.replicas > platform.platform_caps.max_replicas
+	msg := "helm_release.tenant values replicas must stay within platform caps"
+}
+
+deny contains msg if {
+	platform := helm_platform_values
+	platform.hpa.max_replicas > platform.platform_caps.max_hpa_replicas
+	msg := "helm_release.tenant values HPA max_replicas must stay within platform caps"
+}
+
+deny contains msg if {
+	platform := helm_platform_values
+	platform.hpa.min_replicas > platform.hpa.max_replicas
+	msg := "helm_release.tenant values HPA min_replicas must be <= max_replicas"
+}
+
+deny contains msg if {
+	platform := helm_platform_values
+	not resources_within_caps(platform.resources, platform.platform_caps)
+	msg := "helm_release.tenant values resources must stay within platform caps"
+}
+
+deny contains msg if {
+	platform := helm_platform_values
+	not persistent_storage_within_caps(platform.persistent_storage, platform.platform_caps)
+	msg := "helm_release.tenant values persistent_storage must stay within platform caps"
 }

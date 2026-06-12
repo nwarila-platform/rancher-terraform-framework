@@ -43,6 +43,14 @@ variable "values" {
   type        = map(any)
   default     = {}
   nullable    = false
+
+  validation {
+    condition = !can(regex(
+      "\"(password|passwd|token|apikey|api_key|secretkey|secret_key|clientsecret|client_secret|privatekey|private_key|accesskey|access_key)\"[[:space:]]*:[[:space:]]*\"",
+      lower(jsonencode(var.values))
+    ))
+    error_message = "values must not contain raw secret-looking inline values."
+  }
 }
 
 variable "ingress" {
@@ -57,6 +65,20 @@ variable "ingress" {
     condition     = length(trimspace(var.ingress.host)) > 0 && length(trimspace(var.ingress.path)) > 0
     error_message = "ingress.host and ingress.path must not be empty."
   }
+
+  validation {
+    condition = (
+      length(var.ingress.host) <= 253 &&
+      alltrue([
+        for label in split(".", var.ingress.host) :
+        length(label) >= 1 &&
+        length(label) <= 63 &&
+        can(regex("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$", label))
+      ]) &&
+      startswith(var.ingress.path, "/")
+    )
+    error_message = "ingress.host must be a DNS subdomain and ingress.path must start with /."
+  }
 }
 
 variable "replicas" {
@@ -64,6 +86,15 @@ variable "replicas" {
   type        = number
   default     = 2
   nullable    = false
+
+  validation {
+    condition = (
+      var.replicas >= 1 &&
+      var.replicas == floor(var.replicas) &&
+      var.replicas <= var.platform_caps.max_replicas
+    )
+    error_message = "replicas must be a whole number between 1 and platform_caps.max_replicas."
+  }
 }
 
 variable "hpa" {
@@ -76,6 +107,19 @@ variable "hpa" {
   })
   default  = {}
   nullable = false
+
+  validation {
+    condition = (
+      var.hpa.min_replicas >= 1 &&
+      var.hpa.min_replicas == floor(var.hpa.min_replicas) &&
+      var.hpa.max_replicas >= var.hpa.min_replicas &&
+      var.hpa.max_replicas == floor(var.hpa.max_replicas) &&
+      var.hpa.max_replicas <= var.platform_caps.max_hpa_replicas &&
+      var.hpa.target_cpu_utilization_percentage >= 1 &&
+      var.hpa.target_cpu_utilization_percentage <= 100
+    )
+    error_message = "hpa must use whole replicas within platform caps and target CPU 1-100."
+  }
 }
 
 variable "resources" {
@@ -101,6 +145,30 @@ variable "resources" {
     }
   }
   nullable = false
+
+  validation {
+    condition = (
+      length(trimspace(var.resources.requests.cpu)) > 0 &&
+      length(trimspace(var.resources.limits.cpu)) > 0 &&
+      length(trimspace(var.resources.requests.memory)) > 0 &&
+      length(trimspace(var.resources.limits.memory)) > 0 &&
+      can(regex(local.cpu_quantity_pattern, var.resources.requests.cpu)) &&
+      can(regex(local.cpu_quantity_pattern, var.resources.limits.cpu)) &&
+      can(regex(local.binary_quantity_pattern, var.resources.requests.memory)) &&
+      can(regex(local.binary_quantity_pattern, var.resources.limits.memory)) &&
+      try(tonumber(trimsuffix(var.resources.requests.cpu, "m")), -1) >= try(tonumber(trimsuffix(var.platform_caps.min_cpu_request, "m")), -1) &&
+      try(tonumber(trimsuffix(var.resources.requests.cpu, "m")), -1) <= try(tonumber(trimsuffix(var.platform_caps.max_cpu_request, "m")), -1) &&
+      try(tonumber(trimsuffix(var.resources.limits.cpu, "m")), -1) >= try(tonumber(trimsuffix(var.platform_caps.min_cpu_limit, "m")), -1) &&
+      try(tonumber(trimsuffix(var.resources.limits.cpu, "m")), -1) <= try(tonumber(trimsuffix(var.platform_caps.max_cpu_limit, "m")), -1) &&
+      try(tonumber(trimsuffix(var.resources.requests.cpu, "m")), -1) <= try(tonumber(trimsuffix(var.resources.limits.cpu, "m")), -1) &&
+      try(tonumber(trimsuffix(trimsuffix(var.resources.requests.memory, "Mi"), "Gi")) * (endswith(var.resources.requests.memory, "Gi") ? 1024 : 1), -1) >= try(tonumber(trimsuffix(trimsuffix(var.platform_caps.min_memory_request, "Mi"), "Gi")) * (endswith(var.platform_caps.min_memory_request, "Gi") ? 1024 : 1), -1) &&
+      try(tonumber(trimsuffix(trimsuffix(var.resources.requests.memory, "Mi"), "Gi")) * (endswith(var.resources.requests.memory, "Gi") ? 1024 : 1), -1) <= try(tonumber(trimsuffix(trimsuffix(var.platform_caps.max_memory_request, "Mi"), "Gi")) * (endswith(var.platform_caps.max_memory_request, "Gi") ? 1024 : 1), -1) &&
+      try(tonumber(trimsuffix(trimsuffix(var.resources.limits.memory, "Mi"), "Gi")) * (endswith(var.resources.limits.memory, "Gi") ? 1024 : 1), -1) >= try(tonumber(trimsuffix(trimsuffix(var.platform_caps.min_memory_limit, "Mi"), "Gi")) * (endswith(var.platform_caps.min_memory_limit, "Gi") ? 1024 : 1), -1) &&
+      try(tonumber(trimsuffix(trimsuffix(var.resources.limits.memory, "Mi"), "Gi")) * (endswith(var.resources.limits.memory, "Gi") ? 1024 : 1), -1) <= try(tonumber(trimsuffix(trimsuffix(var.platform_caps.max_memory_limit, "Mi"), "Gi")) * (endswith(var.platform_caps.max_memory_limit, "Gi") ? 1024 : 1), -1) &&
+      try(tonumber(trimsuffix(trimsuffix(var.resources.requests.memory, "Mi"), "Gi")) * (endswith(var.resources.requests.memory, "Gi") ? 1024 : 1), -1) <= try(tonumber(trimsuffix(trimsuffix(var.resources.limits.memory, "Mi"), "Gi")) * (endswith(var.resources.limits.memory, "Gi") ? 1024 : 1), -1)
+    )
+    error_message = "resources must use m CPU and Mi/Gi memory within platform caps, with requests <= limits."
+  }
 }
 
 variable "vault_secret_references" {
@@ -113,6 +181,14 @@ variable "vault_secret_references" {
   }))
   default  = {}
   nullable = false
+
+  validation {
+    condition = alltrue([
+      for name, reference in var.vault_secret_references :
+      length(trimspace(name)) > 0 && length(trimspace(reference.path)) > 0
+    ])
+    error_message = "vault_secret_references entries must have a non-empty key and path."
+  }
 }
 
 variable "persistent_storage" {
@@ -124,6 +200,17 @@ variable "persistent_storage" {
   })
   default  = null
   nullable = true
+
+  validation {
+    condition = var.persistent_storage == null ? true : (
+      can(regex(local.binary_quantity_pattern, var.persistent_storage.size)) &&
+      try(tonumber(trimsuffix(trimsuffix(var.persistent_storage.size, "Mi"), "Gi")) * (endswith(var.persistent_storage.size, "Gi") ? 1024 : 1), -1) > 0 &&
+      try(tonumber(trimsuffix(trimsuffix(var.persistent_storage.size, "Mi"), "Gi")) * (endswith(var.persistent_storage.size, "Gi") ? 1024 : 1), -1) <= try(tonumber(trimsuffix(trimsuffix(var.platform_caps.max_persistent_storage_size, "Mi"), "Gi")) * (endswith(var.platform_caps.max_persistent_storage_size, "Gi") ? 1024 : 1), -1) &&
+      contains(var.platform_caps.allowed_storage_classes, var.persistent_storage.storage_class) &&
+      startswith(var.persistent_storage.mount_path, "/")
+    )
+    error_message = "persistent_storage must use an allowed class, / mount path, and size within platform caps."
+  }
 }
 
 variable "escape_hatches" {
@@ -141,13 +228,50 @@ variable "platform_caps" {
   type = object({
     max_replicas                = optional(number, 10)
     max_hpa_replicas            = optional(number, 10)
+    min_cpu_request             = optional(string, "50m")
     max_cpu_request             = optional(string, "500m")
+    min_cpu_limit               = optional(string, "50m")
     max_cpu_limit               = optional(string, "1000m")
+    min_memory_request          = optional(string, "64Mi")
     max_memory_request          = optional(string, "512Mi")
+    min_memory_limit            = optional(string, "64Mi")
     max_memory_limit            = optional(string, "1Gi")
     max_persistent_storage_size = optional(string, "10Gi")
     allowed_storage_classes     = optional(list(string), ["standard"])
   })
   default  = {}
   nullable = false
+
+  validation {
+    condition = (
+      var.platform_caps.max_replicas >= 1 &&
+      var.platform_caps.max_replicas == floor(var.platform_caps.max_replicas) &&
+      var.platform_caps.max_hpa_replicas >= 1 &&
+      var.platform_caps.max_hpa_replicas == floor(var.platform_caps.max_hpa_replicas) &&
+      can(regex(local.cpu_quantity_pattern, var.platform_caps.min_cpu_request)) &&
+      can(regex(local.cpu_quantity_pattern, var.platform_caps.max_cpu_request)) &&
+      can(regex(local.cpu_quantity_pattern, var.platform_caps.min_cpu_limit)) &&
+      can(regex(local.cpu_quantity_pattern, var.platform_caps.max_cpu_limit)) &&
+      can(regex(local.binary_quantity_pattern, var.platform_caps.min_memory_request)) &&
+      can(regex(local.binary_quantity_pattern, var.platform_caps.max_memory_request)) &&
+      can(regex(local.binary_quantity_pattern, var.platform_caps.min_memory_limit)) &&
+      can(regex(local.binary_quantity_pattern, var.platform_caps.max_memory_limit)) &&
+      can(regex(local.binary_quantity_pattern, var.platform_caps.max_persistent_storage_size)) &&
+      try(tonumber(trimsuffix(var.platform_caps.min_cpu_request, "m")), -1) > 0 &&
+      try(tonumber(trimsuffix(var.platform_caps.max_cpu_request, "m")), -1) >= try(tonumber(trimsuffix(var.platform_caps.min_cpu_request, "m")), -1) &&
+      try(tonumber(trimsuffix(var.platform_caps.min_cpu_limit, "m")), -1) > 0 &&
+      try(tonumber(trimsuffix(var.platform_caps.max_cpu_limit, "m")), -1) >= try(tonumber(trimsuffix(var.platform_caps.min_cpu_limit, "m")), -1) &&
+      try(tonumber(trimsuffix(trimsuffix(var.platform_caps.min_memory_request, "Mi"), "Gi")) * (endswith(var.platform_caps.min_memory_request, "Gi") ? 1024 : 1), -1) > 0 &&
+      try(tonumber(trimsuffix(trimsuffix(var.platform_caps.max_memory_request, "Mi"), "Gi")) * (endswith(var.platform_caps.max_memory_request, "Gi") ? 1024 : 1), -1) >= try(tonumber(trimsuffix(trimsuffix(var.platform_caps.min_memory_request, "Mi"), "Gi")) * (endswith(var.platform_caps.min_memory_request, "Gi") ? 1024 : 1), -1) &&
+      try(tonumber(trimsuffix(trimsuffix(var.platform_caps.min_memory_limit, "Mi"), "Gi")) * (endswith(var.platform_caps.min_memory_limit, "Gi") ? 1024 : 1), -1) > 0 &&
+      try(tonumber(trimsuffix(trimsuffix(var.platform_caps.max_memory_limit, "Mi"), "Gi")) * (endswith(var.platform_caps.max_memory_limit, "Gi") ? 1024 : 1), -1) >= try(tonumber(trimsuffix(trimsuffix(var.platform_caps.min_memory_limit, "Mi"), "Gi")) * (endswith(var.platform_caps.min_memory_limit, "Gi") ? 1024 : 1), -1) &&
+      try(tonumber(trimsuffix(trimsuffix(var.platform_caps.max_persistent_storage_size, "Mi"), "Gi")) * (endswith(var.platform_caps.max_persistent_storage_size, "Gi") ? 1024 : 1), -1) > 0 &&
+      length(var.platform_caps.allowed_storage_classes) > 0 &&
+      alltrue([
+        for storage_class in var.platform_caps.allowed_storage_classes :
+        length(trimspace(storage_class)) > 0
+      ])
+    )
+    error_message = "platform_caps must use whole replica caps, m CPU, Mi/Gi memory/storage, and storage classes."
+  }
 }

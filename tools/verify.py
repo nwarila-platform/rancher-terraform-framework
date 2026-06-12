@@ -197,23 +197,94 @@ def opa_policy() -> None:
 
 
 def opa_plan() -> None:
-    fixture = ROOT / "examples" / "multi-environment" / "terraform.tfvars.example"
+    fixture = ROOT / "tests" / "fixtures" / "opa-plan" / "terraform.tfvars"
     if not fixture.is_file():
-        print(
-            "opa-plan skipped: Rancher plan-policy fixture is deferred to Step 3 "
-            f"({fixture.relative_to(ROOT).as_posix()} not present)",
-            flush=True,
+        raise SystemExit(
+            "missing Rancher plan-policy fixture: "
+            f"{fixture.relative_to(ROOT).as_posix()}"
         )
-        return
 
     plan_dir = ROOT / ".tmp" / "opa-plan"
-    plan_dir.mkdir(parents=True, exist_ok=True)
-    plan_path = "../.tmp/opa-plan/framework-plan.tfplan"
+    root_dir = plan_dir / "root"
+    root_dir.mkdir(parents=True, exist_ok=True)
+    root_rel = root_dir.relative_to(ROOT).as_posix()
+    plan_path = "../framework-plan.tfplan"
+    wrapper = root_dir / "main.tf"
+    wrapper.write_text(
+        """terraform {
+  required_version = "= 1.15.4"
+}
+
+variable "rancher_config" {
+  type      = any
+  sensitive = true
+}
+
+variable "helm_kubernetes" {
+  type      = any
+  sensitive = true
+}
+
+variable "cluster_id" {
+  type = string
+}
+
+variable "project_name" {
+  type = string
+}
+
+variable "namespace_name" {
+  type = string
+}
+
+variable "release_name" {
+  type = string
+}
+
+variable "chart_path" {
+  type = string
+}
+
+variable "tenant_reconciler_role_template_id" {
+  type = string
+}
+
+variable "tenant_reconciler_principal" {
+  type = any
+}
+
+variable "ingress" {
+  type = any
+}
+
+variable "values" {
+  type    = any
+  default = {}
+}
+
+module "framework" {
+  source = "../../../terraform"
+
+  rancher_config                     = var.rancher_config
+  helm_kubernetes                    = var.helm_kubernetes
+  cluster_id                         = var.cluster_id
+  project_name                       = var.project_name
+  namespace_name                     = var.namespace_name
+  release_name                       = var.release_name
+  chart_path                         = var.chart_path
+  tenant_reconciler_role_template_id = var.tenant_reconciler_role_template_id
+  tenant_reconciler_principal        = var.tenant_reconciler_principal
+  ingress                            = var.ingress
+  values                             = var.values
+}
+""",
+        encoding="utf-8",
+    )
 
     run(
         [
             "terraform",
-            "-chdir=terraform",
+            f"-chdir={root_rel}",
             "init",
             "-backend=false",
             "-input=false",
@@ -222,15 +293,15 @@ def opa_plan() -> None:
     run(
         [
             "terraform",
-            "-chdir=terraform",
+            f"-chdir={root_rel}",
             "plan",
             "-input=false",
             "-out",
             plan_path,
-            f"-var-file=../{fixture.relative_to(ROOT).as_posix()}",
+            f"-var-file=../../../{fixture.relative_to(ROOT).as_posix()}",
         ]
     )
-    plan_json = capture(["terraform", "-chdir=terraform", "show", "-json", plan_path])
+    plan_json = capture(["terraform", f"-chdir={root_rel}", "show", "-json", plan_path])
     opa_input = capture([PYTHON, "tools/build_plan_input.py"], input_text=plan_json)
     run_opa(
         [

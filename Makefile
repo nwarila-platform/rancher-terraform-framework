@@ -65,8 +65,8 @@ opa-test:
 opa-policy:
 	$(PYTHON) tools/verify.py opa-policy
 
-# OPA plan enforcement. Rancher-specific plan policy is introduced in Step 3;
-# until its example fixture exists, tools/verify.py reports this target skipped.
+# OPA plan enforcement. Uses a local-backend wrapper fixture so Rancher
+# envelope invariants are checked without live Rancher or Kubernetes access.
 opa-plan:
 	$(PYTHON) tools/verify.py opa-plan
 

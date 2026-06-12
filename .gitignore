@@ -106,6 +106,7 @@
 !/terraform/tests/
 !/terraform/tests/envelope.tftest.hcl
 !/terraform/tests/helm-release.tftest.hcl
+!/terraform/tests/validation.tftest.hcl
 
 !/tools/
 !/tools/build_opa_input.py
@@ -132,6 +133,12 @@
 !/tests/ci/terraform_tfvars_args.bats
 !/tests/ci/validate_framework_ref.bats
 !/tests/fixtures/
+!/tests/fixtures/opa-plan/
+!/tests/fixtures/opa-plan/terraform.tfvars
+!/tests/fixtures/opa-plan/chart/
+!/tests/fixtures/opa-plan/chart/Chart.yaml
+!/tests/fixtures/opa-plan/chart/templates/
+!/tests/fixtures/opa-plan/chart/templates/configmap.yaml
 !/tests/fixtures/privileged-workflows/
 !/tests/fixtures/privileged-workflows/bad/
 !/tests/fixtures/privileged-workflows/bad/.github/

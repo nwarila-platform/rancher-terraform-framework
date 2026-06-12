@@ -16,6 +16,15 @@ locals {
 }
 
 
+# Validation Helper LOCALS
+locals {
+
+  cpu_quantity_pattern    = "^([1-9][0-9]*)m$"
+  binary_quantity_pattern = "^([1-9][0-9]*)(Mi|Gi)$"
+
+}
+
+
 # Dynamically Configured LOCALS
 locals {
 

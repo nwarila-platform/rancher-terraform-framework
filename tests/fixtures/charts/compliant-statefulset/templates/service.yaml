@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: compliant-statefulset-fixture
+  labels:
+    app.kubernetes.io/name: compliant-statefulset-fixture
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: compliant-statefulset-fixture
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  ports:
+    - name: http
+      port: {{ int .Values.service.port }}
+      targetPort: http
+      protocol: TCP

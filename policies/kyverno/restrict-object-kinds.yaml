@@ -1,0 +1,47 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: nwarila-restrict-object-kinds
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: restrict-workload-object-kinds
+      match:
+        any:
+          - resources:
+              kinds:
+                - "*"
+      exclude:
+        any:
+          - resources:
+              kinds:
+                - ConfigMap
+                - CronJob
+                - Deployment
+                - HorizontalPodAutoscaler
+                - Ingress
+                - Job
+                - PersistentVolumeClaim
+                - PodDisruptionBudget
+                - Service
+                - ServiceAccount
+                - StatefulSet
+                - VaultStaticSecret
+      validate:
+        failureAction: Enforce
+        message: >-
+          Tenant charts may render only approved workload kinds: ConfigMap,
+          CronJob, Deployment, HorizontalPodAutoscaler, Ingress, Job,
+          PersistentVolumeClaim, PodDisruptionBudget, Service, ServiceAccount,
+          StatefulSet, and VaultStaticSecret. DaemonSet, bare Pod, ReplicaSet,
+          Secret, Role, RoleBinding, ClusterRole, ClusterRoleBinding,
+          CustomResourceDefinition, Namespace, ResourceQuota, LimitRange,
+          NetworkPolicy, and all other non-approved kinds are denied; use
+          platform-owned controllers or VaultStaticSecret where required.
+        deny:
+          conditions:
+            all:
+              - key: true
+                operator: Equals
+                value: true

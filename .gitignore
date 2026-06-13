@@ -95,6 +95,7 @@
 !/policies/kyverno/pss-restricted-dangerous-fields.yaml
 !/policies/kyverno/deny-external-service-types.yaml
 !/policies/kyverno/require-resource-limits.yaml
+!/policies/kyverno/restrict-object-kinds.yaml
 
 !/charts/
 !/charts/platform-workload/
@@ -164,6 +165,12 @@
 !/tests/fixtures/charts/compliant/templates/
 !/tests/fixtures/charts/compliant/templates/deployment.yaml
 !/tests/fixtures/charts/compliant/templates/service.yaml
+!/tests/fixtures/charts/compliant-statefulset/
+!/tests/fixtures/charts/compliant-statefulset/Chart.yaml
+!/tests/fixtures/charts/compliant-statefulset/values.yaml
+!/tests/fixtures/charts/compliant-statefulset/templates/
+!/tests/fixtures/charts/compliant-statefulset/templates/service.yaml
+!/tests/fixtures/charts/compliant-statefulset/templates/statefulset.yaml
 !/tests/fixtures/charts/hostile/
 !/tests/fixtures/charts/hostile/Chart.yaml
 !/tests/fixtures/charts/hostile/values.yaml

@@ -244,6 +244,7 @@ destroyed in the same validation flow.
 ## Superseded by
 
 - [ADR-repo/0006](0006-use-all-workloads-tenant-contract.md) for the single-chart, single-namespace delivery clauses only. This ADR's Rancher envelope, local chart, and real-provider CI decisions remain current.
+- [ADR-repo/0009](0009-split-platform-envelope-from-tenant-deploy-and-scope-the-reconcile-identity.md) for the single-module delivery and opaque Helm credential clauses only. This ADR's Rancher envelope, local chart, Helm release, and disposable real-provider CI decisions remain current.
 
 ## Implementing PRs
 

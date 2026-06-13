@@ -54,3 +54,4 @@ the org drift gate.
 | [ADR-repo/0006](repo/0006-use-all-workloads-tenant-contract.md) | Accepted | Use `all_workloads` so one tenant tfvars can define multiple per-workload namespaces and releases under one tenant project. |
 | [ADR-repo/0007](repo/0007-adopt-packer-limited-hcl-style.md) | Accepted | Adopt the packer-limited HCL source style for future Terraform implementation work. |
 | [ADR-repo/0008](repo/0008-retire-static-terraform-plan-opa.md) | Accepted | Retire static OPA-on-plan for this Rancher framework. |
+| [ADR-repo/0009](repo/0009-split-platform-envelope-from-tenant-deploy-and-scope-the-reconcile-identity.md) | Accepted | Split the platform envelope module from tenant deploy and scope the reconcile identity. |

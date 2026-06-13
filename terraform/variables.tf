@@ -362,6 +362,28 @@ variable "helm_kubernetes" {
   sensitive = true
 }
 
+variable "kubernetes_admin" {
+  description = "Sensitive Kubernetes admin auth configuration used by the platform envelope module to create namespace-local reconcile RBAC. This is distinct from the future scoped tenant deploy identity."
+  type = object({
+    config_path            = optional(string)
+    config_paths           = optional(list(string))
+    config_context         = optional(string)
+    host                   = optional(string)
+    username               = optional(string)
+    password               = optional(string)
+    token                  = optional(string)
+    insecure               = optional(bool)
+    tls_server_name        = optional(string)
+    client_certificate     = optional(string)
+    client_key             = optional(string)
+    cluster_ca_certificate = optional(string)
+    proxy_url              = optional(string)
+  })
+  default   = {}
+  nullable  = false
+  sensitive = true
+}
+
 variable "cluster_id" {
   description = "Rancher downstream cluster ID that owns the tenant project."
   type        = string

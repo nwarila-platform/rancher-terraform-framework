@@ -10,6 +10,8 @@ mock_provider "rancher2" {
 
 mock_provider "helm" {}
 
+mock_provider "kubernetes" {}
+
 variables {
   rancher_config = {
     api_url   = "https://rancher.test.invalid"

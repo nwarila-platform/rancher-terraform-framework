@@ -8,6 +8,10 @@ helm_kubernetes = {
   config_path = "./.generated/downstream-kubeconfig.yaml"
 }
 
+kubernetes_admin = {
+  config_path = "./.generated/platform-admin-kubeconfig.yaml"
+}
+
 cluster_id                         = "c-example"
 project_name                       = "example-tenant"
 tenant_reconciler_role_template_id = "nwarila-tenant-reconciler"

@@ -88,6 +88,63 @@ resource "rancher2_namespace" "workload" {
 
 }
 
+resource "kubernetes_service_account_v1" "tenant_reconciler" {
+  for_each = local.workloads
+
+  # Create the restricted reconcile identity in each workload namespace.
+  metadata {
+    name      = local.tenant_reconcile_identity_name
+    namespace = rancher2_namespace.workload[each.key].name
+  }
+
+  automount_service_account_token = false
+
+}
+
+resource "kubernetes_role_v1" "tenant_reconciler" {
+  for_each = local.workloads
+
+  # Grant only the approved chart reconciliation surface from ADR-repo/0009.
+  metadata {
+    name      = local.tenant_reconcile_identity_name
+    namespace = rancher2_namespace.workload[each.key].name
+  }
+
+  dynamic "rule" {
+    for_each = local.tenant_reconcile_role_rules
+
+    content {
+      api_groups = rule.value.api_groups
+      resources  = rule.value.resources
+      verbs      = rule.value.verbs
+    }
+  }
+
+}
+
+resource "kubernetes_role_binding_v1" "tenant_reconciler" {
+  for_each = local.workloads
+
+  # Bind the namespace-local reconcile ServiceAccount to its allowlisted Role.
+  metadata {
+    name      = local.tenant_reconcile_identity_name
+    namespace = rancher2_namespace.workload[each.key].name
+  }
+
+  subject {
+    kind      = "ServiceAccount"
+    name      = kubernetes_service_account_v1.tenant_reconciler[each.key].metadata[0].name
+    namespace = kubernetes_service_account_v1.tenant_reconciler[each.key].metadata[0].namespace
+  }
+
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "Role"
+    name      = kubernetes_role_v1.tenant_reconciler[each.key].metadata[0].name
+  }
+
+}
+
 resource "rancher2_project_role_template_binding" "tenant_reconciler" {
 
   # Bind the tenant reconcile identity to an existing platform-owned role template.

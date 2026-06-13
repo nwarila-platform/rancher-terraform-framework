@@ -17,6 +17,30 @@ provider "rancher2" {
 #endregion --- [ Rancher Provider ] ---------------------------------------------------------- #
 
 
+#region ------ [ Kubernetes Provider ] ------------------------------------------------------- #
+
+provider "kubernetes" {
+
+  # Use the platform envelope's admin downstream-cluster context for RBAC creation.
+  config_path            = var.kubernetes_admin.config_path
+  config_paths           = var.kubernetes_admin.config_paths
+  config_context         = var.kubernetes_admin.config_context
+  host                   = var.kubernetes_admin.host
+  username               = var.kubernetes_admin.username
+  password               = var.kubernetes_admin.password
+  token                  = var.kubernetes_admin.token
+  insecure               = var.kubernetes_admin.insecure
+  tls_server_name        = var.kubernetes_admin.tls_server_name
+  client_certificate     = var.kubernetes_admin.client_certificate
+  client_key             = var.kubernetes_admin.client_key
+  cluster_ca_certificate = var.kubernetes_admin.cluster_ca_certificate
+  proxy_url              = var.kubernetes_admin.proxy_url
+
+}
+
+#endregion --- [ Kubernetes Provider ] ------------------------------------------------------- #
+
+
 #region ------ [ Helm Provider ] ------------------------------------------------------------- #
 
 provider "helm" {

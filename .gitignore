@@ -86,6 +86,7 @@
 !/docs/decision-records/repo/0006-use-all-workloads-tenant-contract.md
 !/docs/decision-records/repo/0007-adopt-packer-limited-hcl-style.md
 !/docs/decision-records/repo/0008-retire-static-terraform-plan-opa.md
+!/docs/decision-records/repo/0009-split-platform-envelope-from-tenant-deploy-and-scope-the-reconcile-identity.md
 
 !/policies/
 !/policies/opa/

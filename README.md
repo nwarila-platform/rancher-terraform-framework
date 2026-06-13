@@ -1,14 +1,16 @@
 # rancher-terraform-framework
 
-Reusable Rancher PaaS framework module for NWarila-hosted Kubernetes. A tenant
+Reusable Rancher PaaS framework for NWarila-hosted Kubernetes. A tenant
 repository derives from `deploy-tenant-template`, keeps in-repo Helm chart
 source plus one `terraform.tfvars`, and uses `all_workloads` to define one or
 more workload releases that can pass the platform security baseline. This
-repository is the framework module, not a deployment root: it will own the
-Rancher tenant project, create a namespace per workload, deploy each local chart
-with `helm_release`, and enforce a two-layer security model built from
-tenant-repo render checks plus in-cluster Pod Security Admission Restricted and
-Kyverno.
+repository is the framework source, not a deployment root: it will provide a
+platform-run envelope module for the Rancher tenant project, per-workload
+namespaces, quota, PSA labels, and restricted reconcile identity, plus a
+tenant-consumed deploy module that runs `helm_release` only with the
+platform-issued scoped credential. The security model is built from
+tenant-repo render checks plus in-cluster Pod Security Admission Restricted,
+Kyverno, and matching least-privilege RBAC.
 
 The Rancher-specific Terraform module, golden chart starter, policy manifests,
 tenant template, and ephemeral-Rancher CI harness are being built in small,
@@ -46,3 +48,5 @@ long-lived external credentials.
 - [ADR-repo/0005](docs/decision-records/repo/0005-validate-with-ephemeral-rancher-ci.md) commits validation to a disposable full Rancher CI environment.
 - [ADR-repo/0006](docs/decision-records/repo/0006-use-all-workloads-tenant-contract.md) updates the tenant contract to `all_workloads` under one tenant project.
 - [ADR-repo/0007](docs/decision-records/repo/0007-adopt-packer-limited-hcl-style.md) adopts the packer-limited HCL style for future Terraform implementation work.
+- [ADR-repo/0008](docs/decision-records/repo/0008-retire-static-terraform-plan-opa.md) retires static OPA-on-plan for this Rancher framework.
+- [ADR-repo/0009](docs/decision-records/repo/0009-split-platform-envelope-from-tenant-deploy-and-scope-the-reconcile-identity.md) splits platform envelope from tenant deploy and scopes the reconcile identity.

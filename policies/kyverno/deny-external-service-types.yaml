@@ -1,0 +1,37 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: nwarila-deny-external-service-types
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: restrict-service-types
+      match:
+        any:
+          - resources:
+              kinds:
+                - Service
+      validate:
+        failureAction: Enforce
+        message: >-
+          Services must use type ClusterIP. LoadBalancer, NodePort, and
+          ExternalName services can expose or redirect traffic outside the
+          namespace boundary and are denied by the framework.
+        pattern:
+          spec:
+            =(type): ClusterIP
+    - name: deny-service-external-ips
+      match:
+        any:
+          - resources:
+              kinds:
+                - Service
+      validate:
+        failureAction: Enforce
+        message: >-
+          Services must not set spec.externalIPs. External IPs can redirect
+          cluster traffic to tenant pods and are denied by the framework.
+        pattern:
+          spec:
+            X(externalIPs): "null"

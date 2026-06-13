@@ -16,3 +16,42 @@ spec:
       port: {{ int .Values.service.port }}
       targetPort: http
       protocol: TCP
+---
+# DELIBERATELY NON-COMPLIANT FIXTURE: ClusterIP with externalIPs bypasses
+# Service type restrictions unless the framework denies externalIPs directly.
+apiVersion: v1
+kind: Service
+metadata:
+  name: hostile-fixture-external-ip
+  labels:
+    app.kubernetes.io/name: hostile-fixture
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+spec:
+  type: ClusterIP
+  externalIPs:
+    - 198.51.100.10
+  selector:
+    app.kubernetes.io/name: hostile-fixture
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  ports:
+    - name: http
+      port: {{ int .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+---
+# DELIBERATELY NON-COMPLIANT FIXTURE: ExternalName can redirect platform
+# traffic to arbitrary names, so the framework rejects it for tenant charts.
+apiVersion: v1
+kind: Service
+metadata:
+  name: hostile-fixture-external-name
+  labels:
+    app.kubernetes.io/name: hostile-fixture
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+spec:
+  type: ExternalName
+  externalName: metadata.google.internal
+  ports:
+    - name: http
+      port: {{ int .Values.service.port }}
+      protocol: TCP

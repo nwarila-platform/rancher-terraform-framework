@@ -93,6 +93,8 @@
 !/policies/opa/repo_hygiene_test.rego
 !/policies/kyverno/
 !/policies/kyverno/pss-restricted-dangerous-fields.yaml
+!/policies/kyverno/deny-external-service-types.yaml
+!/policies/kyverno/require-resource-limits.yaml
 
 !/charts/
 !/charts/platform-workload/

@@ -1,0 +1,42 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: nwarila-require-resource-limits
+  annotations:
+    pod-policies.kyverno.io/autogen-controllers: Deployment,DaemonSet,StatefulSet,Job,CronJob
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-cpu-memory-limits
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        failureAction: Enforce
+        message: >-
+          All containers, init containers, and ephemeral containers must set
+          resources.limits.cpu and resources.limits.memory. Resource limits are
+          the per-container cap enforced by the framework.
+        pattern:
+          spec:
+            containers:
+              - name: "*"
+                resources:
+                  limits:
+                    cpu: "?*"
+                    memory: "?*"
+            =(initContainers):
+              - name: "*"
+                resources:
+                  limits:
+                    cpu: "?*"
+                    memory: "?*"
+            =(ephemeralContainers):
+              - name: "*"
+                resources:
+                  limits:
+                    cpu: "?*"
+                    memory: "?*"

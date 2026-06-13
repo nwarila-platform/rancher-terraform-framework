@@ -22,6 +22,11 @@ output "namespace_names" {
   value       = { for key, namespace in rancher2_namespace.workload : key => namespace.name }
 }
 
+output "reconcile_service_account_names" {
+  description = "Restricted reconcile ServiceAccount names created in each workload namespace, keyed by workload key."
+  value       = { for key, account in kubernetes_service_account_v1.tenant_reconciler : key => account.metadata[0].name }
+}
+
 output "helm_release_names" {
   description = "Helm release names deployed into tenant namespaces, keyed by workload key."
   value       = { for key, release in helm_release.workload : key => release.name }

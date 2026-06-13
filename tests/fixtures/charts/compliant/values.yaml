@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: registry.k8s.io/pause
+  repository: ghcr.io/nwarila-platform/compliant-fixture
   digest: sha256:e6f1816883972d4be47bd48879a08919b96afcd344132622e4d444987919323c
   pullPolicy: IfNotPresent
 

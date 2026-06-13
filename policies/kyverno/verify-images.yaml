@@ -1,0 +1,53 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: nwarila-verify-images
+  annotations:
+    pod-policies.kyverno.io/autogen-controllers: Deployment,StatefulSet,Job,CronJob
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-approved-image-registry-and-digest
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      context:
+        - name: allowedImageReferenceRegexes
+          variable:
+            value:
+              # Allowed image-reference regex list. Add the future local cache
+              # registry as one more anchored regex in this list.
+              - >-
+                ^ghcr\.io/nwarila-platform/[a-z0-9][a-z0-9._/-]*(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?@sha256:[A-Fa-f0-9]{64}$
+      validate:
+        failureAction: Enforce
+        message: >-
+          Container images must come from an approved NWarila registry path
+          and be pinned with a sha256 digest. Mutable tags, default-registry
+          image names, foreign registries, and GHCR lookalike organizations are
+          denied by the framework.
+        foreach:
+          - list: request.object.spec.containers || `[]`
+            deny:
+              conditions:
+                all:
+                  - key: "{{ regex_match(join('|', allowedImageReferenceRegexes), element.image || '') }}"
+                    operator: Equals
+                    value: false
+          - list: request.object.spec.initContainers || `[]`
+            deny:
+              conditions:
+                all:
+                  - key: "{{ regex_match(join('|', allowedImageReferenceRegexes), element.image || '') }}"
+                    operator: Equals
+                    value: false
+          - list: request.object.spec.ephemeralContainers || `[]`
+            deny:
+              conditions:
+                all:
+                  - key: "{{ regex_match(join('|', allowedImageReferenceRegexes), element.image || '') }}"
+                    operator: Equals
+                    value: false

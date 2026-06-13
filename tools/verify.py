@@ -356,6 +356,160 @@ def chart_schema() -> None:
             )
 
 
+def run_kyverno_apply(
+    kyverno: list[str],
+    resource_file: Path,
+    *,
+    case: str,
+    expect_pass: bool,
+    expected_failure_snippets: tuple[str, ...] = (),
+) -> None:
+    args = [
+        *kyverno,
+        "apply",
+        "policies/kyverno",
+        "--resource",
+        str(resource_file),
+        "--detailed-results",
+    ]
+    print("+ " + " ".join(args), flush=True)
+    try:
+        completed = subprocess.run(
+            args,
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        raise SystemExit(f"missing executable: {kyverno[0]}") from exc
+
+    output = completed.stdout + completed.stderr
+    if expect_pass:
+        if completed.returncode != 0:
+            sys.stdout.write(output)
+            raise SystemExit(completed.returncode)
+        print(f"chart-policy: {case} PASS", flush=True)
+        return
+
+    if completed.returncode == 0:
+        sys.stdout.write(output)
+        raise SystemExit(f"chart-policy: {case} unexpectedly passed Kyverno policies")
+
+    missing = [snippet for snippet in expected_failure_snippets if snippet not in output]
+    if missing:
+        sys.stdout.write(output)
+        formatted = ", ".join(repr(snippet) for snippet in missing)
+        raise SystemExit(f"chart-policy: {case} output missing expected violations: {formatted}")
+
+    print(f"chart-policy: {case} expected FAIL", flush=True)
+    sys.stdout.write(output)
+
+
+def chart_policy() -> None:
+    helm = command_from_env("HELM", "helm")
+    kyverno = command_from_env("KYVERNO", "kyverno")
+
+    cases: tuple[
+        tuple[
+            str,
+            str,
+            str,
+            str | None,
+            bool,
+            tuple[str, ...],
+            tuple[str, ...],
+        ],
+        ...,
+    ] = (
+        (
+            "platform-workload-default",
+            "platform-workload-policy-default",
+            "charts/platform-workload",
+            None,
+            True,
+            (),
+            (),
+        ),
+        (
+            "platform-workload-all-hatches",
+            "platform-workload-policy-hatches",
+            "charts/platform-workload",
+            "platform-workload-all-hatches.yaml",
+            True,
+            (
+                "kind: PersistentVolumeClaim",
+                "automountServiceAccountToken: true",
+                "- NET_BIND_SERVICE",
+            ),
+            (),
+        ),
+        (
+            "compliant-fixture",
+            "compliant-policy",
+            "tests/fixtures/charts/compliant",
+            None,
+            True,
+            ("kind: Deployment\n", "kind: Service\n"),
+            (),
+        ),
+        (
+            "hostile-fixture",
+            "hostile-policy",
+            "tests/fixtures/charts/hostile",
+            None,
+            False,
+            (
+                "privileged: true",
+                "hostPath:",
+                "hostNetwork: true",
+                "hostPID: true",
+                "hostIPC: true",
+                "runAsNonRoot: false",
+                "runAsUser: 0",
+                "readOnlyRootFilesystem: false",
+                "- SYS_ADMIN",
+            ),
+            (
+                "enforce-restricted-pod-security",
+                "require-runtime-default-seccomp",
+                "require-read-only-root-filesystem",
+            ),
+        ),
+    )
+
+    with tempfile.TemporaryDirectory(prefix="chart-policy-") as tmp:
+        tmpdir = Path(tmp)
+        values_file = tmpdir / "platform-workload-all-hatches.yaml"
+        values_file.write_text(PLATFORM_WORKLOAD_CONDITIONAL_VALUES, encoding="utf-8")
+
+        for (
+            case,
+            release,
+            chart,
+            values_name,
+            expect_pass,
+            required_render_snippets,
+            expected_failure_snippets,
+        ) in cases:
+            print(f"chart-policy: {case}", flush=True)
+            helm_args = [*helm, "template", release, chart]
+            if values_name is not None:
+                helm_args.extend(["--values", str(tmpdir / values_name)])
+
+            rendered = capture(helm_args)
+            assert_render_contains(case, rendered, required_render_snippets)
+            resource_file = tmpdir / f"{case}.yaml"
+            resource_file.write_text(rendered, encoding="utf-8")
+            run_kyverno_apply(
+                kyverno,
+                resource_file,
+                case=case,
+                expect_pass=expect_pass,
+                expected_failure_snippets=expected_failure_snippets,
+            )
+
+
 def build_steps(case: str) -> dict[str, Step]:
     shell_helpers = sorted(
         path.relative_to(ROOT).as_posix() for path in (ROOT / "tools" / "ci").glob("*.sh")
@@ -415,6 +569,7 @@ def build_steps(case: str) -> dict[str, Step]:
         "workflow-helper-tests": workflow_helper_tests,
         "workflow-bom-check": workflow_bom_check,
         "chart-schema": chart_schema,
+        "chart-policy": chart_policy,
         "privileged-workflows": privileged_workflows,
         "opa-test": lambda: run_opa(["opa", "test", "policies/opa"]),
         "opa-policy": opa_policy,
@@ -451,6 +606,7 @@ TARGETS: dict[str, tuple[str, ...]] = {
         "workflow-bom-check",
         "test",
         "chart-schema",
+        "chart-policy",
         "workflow-helper-tests",
         "privileged-workflows",
         "policy",

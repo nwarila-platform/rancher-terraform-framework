@@ -158,6 +158,8 @@ jobs:
           ACTIONLINT_VERSION: "1.7.12"
           # renovate: datasource=github-releases depName=yannh/kubeconform
           KUBECONFORM_VERSION: "0.8.0"
+          # renovate: datasource=github-releases depName=kyverno/kyverno
+          KYVERNO_VERSION: "1.18.1"
           # renovate: datasource=npm depName=markdownlint-cli2
           MARKDOWNLINT_CLI2_VERSION: "0.22.1"
           # renovate: datasource=github-releases depName=terraform-linters/tflint
@@ -204,6 +206,8 @@ jobs:
           ACTIONLINT_VERSION: "1.7.12"
           # renovate: datasource=github-releases depName=yannh/kubeconform
           KUBECONFORM_VERSION: "0.8.0"
+          # renovate: datasource=github-releases depName=kyverno/kyverno
+          KYVERNO_VERSION: "1.18.1"
           # renovate: datasource=npm depName=markdownlint-cli2
           MARKDOWNLINT_CLI2_VERSION: "0.22.1"
           # renovate: datasource=github-releases depName=terraform-linters/tflint

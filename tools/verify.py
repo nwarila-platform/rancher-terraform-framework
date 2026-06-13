@@ -473,6 +473,9 @@ def chart_policy() -> None:
                 "- SYS_ADMIN",
                 "externalIPs:",
                 "type: ExternalName",
+                "kind: Secret\n",
+                "kind: Role\n",
+                "kind: RoleBinding\n",
             ),
             (
                 "enforce-restricted-pod-security",
@@ -481,6 +484,9 @@ def chart_policy() -> None:
                 "restrict-service-types",
                 "deny-service-external-ips",
                 "require-cpu-memory-limits",
+                "restrict-workload-object-kinds",
+                "Tenant charts may render only approved workload kinds",
+                "Secret, Role, RoleBinding",
             ),
         ),
     )

@@ -95,6 +95,7 @@
 !/policies/kyverno/pss-restricted-dangerous-fields.yaml
 !/policies/kyverno/deny-external-service-types.yaml
 !/policies/kyverno/require-resource-limits.yaml
+!/policies/kyverno/restrict-object-kinds.yaml
 
 !/charts/
 !/charts/platform-workload/

@@ -1,43 +1,43 @@
 # ============================================================================================ #
-# outputs.tf — Output values for Rancher framework                                              #
+# outputs.tf - Output values for Rancher framework                                             #
 # ============================================================================================ #
 
 output "project_id" {
   description = "Rancher project ID for the tenant envelope."
-  value       = rancher2_project.tenant.id
+  value       = module.envelope.project_id
 }
 
 output "project_name" {
   description = "Rancher project name for the tenant envelope."
-  value       = rancher2_project.tenant.name
+  value       = module.envelope.project_name
 }
 
 output "namespace_ids" {
   description = "Rancher namespace IDs managed by this framework, keyed by workload key."
-  value       = { for key, namespace in rancher2_namespace.workload : key => namespace.id }
+  value       = module.envelope.namespace_ids
 }
 
 output "namespace_names" {
   description = "Kubernetes namespace names managed by this framework, keyed by workload key."
-  value       = { for key, namespace in rancher2_namespace.workload : key => namespace.name }
+  value       = module.envelope.namespace_names
 }
 
 output "reconcile_service_account_names" {
   description = "Restricted reconcile ServiceAccount names created in each workload namespace, keyed by workload key."
-  value       = { for key, account in kubernetes_service_account_v1.tenant_reconciler : key => account.metadata[0].name }
+  value       = module.envelope.reconcile_service_account_names
 }
 
 output "helm_release_names" {
   description = "Helm release names deployed into tenant namespaces, keyed by workload key."
-  value       = { for key, release in helm_release.workload : key => release.name }
+  value       = module.deploy.helm_release_names
 }
 
 output "helm_release_statuses" {
   description = "Helm release statuses reported by the Helm provider, keyed by workload key."
-  value       = { for key, release in helm_release.workload : key => release.status }
+  value       = module.deploy.helm_release_statuses
 }
 
 output "chart_paths" {
   description = "Resolved local chart paths supplied to helm_release, keyed by workload key."
-  value       = { for key, workload in local.workloads : key => workload.chart_path }
+  value       = module.deploy.chart_paths
 }

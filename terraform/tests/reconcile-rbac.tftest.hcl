@@ -18,12 +18,8 @@ variables {
     token_key = "test-token-not-a-secret"
   }
 
-  cluster_id                         = "c-mock"
-  project_name                       = "tenant-project"
-  tenant_reconciler_role_template_id = "nwarila-tenant-reconciler"
-  tenant_reconciler_principal = {
-    group_principal_id = "local://tenant-reconcilers"
-  }
+  cluster_id   = "c-mock"
+  project_name = "tenant-project"
 
   all_workloads = [
     {
@@ -43,16 +39,16 @@ run "reconcile_rbac_grants_approved_kinds_only" {
 
   assert {
     condition = (
-      kubernetes_service_account_v1.tenant_reconciler["app"].metadata[0].name == "nwarila-tenant-reconciler" &&
-      kubernetes_service_account_v1.tenant_reconciler["app"].metadata[0].namespace == rancher2_namespace.workload["app"].name &&
-      kubernetes_service_account_v1.tenant_reconciler["app"].automount_service_account_token == false
+      module.envelope.reconcile_service_account_names["app"] == "nwarila-tenant-reconciler" &&
+      module.envelope.reconcile_service_account_namespaces["app"] == module.envelope.namespace_names["app"] &&
+      module.envelope.reconcile_service_account_automount["app"] == false
     )
     error_message = "The reconcile ServiceAccount must be namespace-local and must not automount tokens."
   }
 
   assert {
     condition = alltrue([
-      for rule in kubernetes_role_v1.tenant_reconciler["app"].rule :
+      for rule in module.envelope.reconcile_role_rules :
       length(setsubtract([
         "get",
         "list",
@@ -79,7 +75,7 @@ run "reconcile_rbac_grants_approved_kinds_only" {
     condition = alltrue([
       for resource in ["deployments", "statefulsets"] :
       contains(flatten([
-        for rule in kubernetes_role_v1.tenant_reconciler["app"].rule :
+        for rule in module.envelope.reconcile_role_rules :
         contains(rule.api_groups, "apps") ? rule.resources : []
       ]), resource)
     ])
@@ -95,7 +91,7 @@ run "reconcile_rbac_grants_approved_kinds_only" {
         "serviceaccounts",
       ] :
       contains(flatten([
-        for rule in kubernetes_role_v1.tenant_reconciler["app"].rule :
+        for rule in module.envelope.reconcile_role_rules :
         contains(rule.api_groups, "") ? rule.resources : []
       ]), resource)
     ])
@@ -106,7 +102,7 @@ run "reconcile_rbac_grants_approved_kinds_only" {
     condition = alltrue([
       for resource in ["jobs", "cronjobs"] :
       contains(flatten([
-        for rule in kubernetes_role_v1.tenant_reconciler["app"].rule :
+        for rule in module.envelope.reconcile_role_rules :
         contains(rule.api_groups, "batch") ? rule.resources : []
       ]), resource)
     ])
@@ -116,19 +112,19 @@ run "reconcile_rbac_grants_approved_kinds_only" {
   assert {
     condition = (
       contains(flatten([
-        for rule in kubernetes_role_v1.tenant_reconciler["app"].rule :
+        for rule in module.envelope.reconcile_role_rules :
         contains(rule.api_groups, "networking.k8s.io") ? rule.resources : []
       ]), "ingresses") &&
       contains(flatten([
-        for rule in kubernetes_role_v1.tenant_reconciler["app"].rule :
+        for rule in module.envelope.reconcile_role_rules :
         contains(rule.api_groups, "autoscaling") ? rule.resources : []
       ]), "horizontalpodautoscalers") &&
       contains(flatten([
-        for rule in kubernetes_role_v1.tenant_reconciler["app"].rule :
+        for rule in module.envelope.reconcile_role_rules :
         contains(rule.api_groups, "policy") ? rule.resources : []
       ]), "poddisruptionbudgets") &&
       contains(flatten([
-        for rule in kubernetes_role_v1.tenant_reconciler["app"].rule :
+        for rule in module.envelope.reconcile_role_rules :
         contains(rule.api_groups, "secrets.hashicorp.com") ? rule.resources : []
       ]), "vaultstaticsecrets")
     )
@@ -153,7 +149,7 @@ run "reconcile_rbac_grants_approved_kinds_only" {
         "replicasets",
       ] :
       !contains(flatten([
-        for rule in kubernetes_role_v1.tenant_reconciler["app"].rule : rule.resources
+        for rule in module.envelope.reconcile_role_rules : rule.resources
       ]), resource)
     ])
     error_message = "The reconcile Role must deny non-approved kinds by omitting their resources."
@@ -161,11 +157,11 @@ run "reconcile_rbac_grants_approved_kinds_only" {
 
   assert {
     condition = (
-      kubernetes_role_binding_v1.tenant_reconciler["app"].subject[0].kind == "ServiceAccount" &&
-      kubernetes_role_binding_v1.tenant_reconciler["app"].subject[0].name == kubernetes_service_account_v1.tenant_reconciler["app"].metadata[0].name &&
-      kubernetes_role_binding_v1.tenant_reconciler["app"].subject[0].namespace == kubernetes_service_account_v1.tenant_reconciler["app"].metadata[0].namespace &&
-      kubernetes_role_binding_v1.tenant_reconciler["app"].role_ref[0].kind == "Role" &&
-      kubernetes_role_binding_v1.tenant_reconciler["app"].role_ref[0].name == kubernetes_role_v1.tenant_reconciler["app"].metadata[0].name
+      module.envelope.reconcile_role_binding_subjects["app"].kind == "ServiceAccount" &&
+      module.envelope.reconcile_role_binding_subjects["app"].name == module.envelope.reconcile_service_account_names["app"] &&
+      module.envelope.reconcile_role_binding_subjects["app"].namespace == module.envelope.reconcile_service_account_namespaces["app"] &&
+      module.envelope.reconcile_role_binding_role_refs["app"].kind == "Role" &&
+      module.envelope.reconcile_role_binding_role_refs["app"].name == module.envelope.reconcile_role_names["app"]
     )
     error_message = "The reconcile RoleBinding must bind the namespace-local ServiceAccount to the namespace Role."
   }

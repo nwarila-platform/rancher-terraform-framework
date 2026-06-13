@@ -4,20 +4,18 @@ rancher_config = {
   insecure  = false
 }
 
-helm_kubernetes = {
-  config_path = "./.generated/downstream-kubeconfig.yaml"
+scoped_deploy_kubernetes = {
+  # Temporary Step-27 seam. Step 28 mints this auth per deploy via Vault
+  # TokenRequest instead of reading a standing kubeconfig from disk.
+  config_path = "./.generated/scoped-reconcile-kubeconfig.yaml"
 }
 
 kubernetes_admin = {
   config_path = "./.generated/platform-admin-kubeconfig.yaml"
 }
 
-cluster_id                         = "c-example"
-project_name                       = "example-tenant"
-tenant_reconciler_role_template_id = "nwarila-tenant-reconciler"
-tenant_reconciler_principal = {
-  group_principal_id = "local://tenant-reconcilers"
-}
+cluster_id   = "c-example"
+project_name = "example-tenant"
 
 all_workloads = [
   {

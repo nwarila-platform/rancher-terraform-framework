@@ -18,12 +18,8 @@ variables {
     token_key = "test-token-not-a-secret"
   }
 
-  cluster_id                         = "c-mock"
-  project_name                       = "tenant-project"
-  tenant_reconciler_role_template_id = "nwarila-tenant-reconciler"
-  tenant_reconciler_principal = {
-    group_principal_id = "local://tenant-reconcilers"
-  }
+  cluster_id   = "c-mock"
+  project_name = "tenant-project"
 
   all_workloads = [
     {

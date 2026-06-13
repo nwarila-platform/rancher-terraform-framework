@@ -340,8 +340,13 @@ variable "rancher_config" {
   }
 }
 
-variable "helm_kubernetes" {
-  description = "Sensitive Kubernetes auth configuration for the Helm provider targeting the downstream cluster."
+variable "scoped_deploy_kubernetes" {
+  description = <<-EOT
+  Temporary sensitive seam for the tenant deploy module's scoped Kubernetes auth.
+  Step 28 replaces this caller-supplied object with a Vault-brokered short-lived
+  TokenRequest credential. Do not commit real kubeconfigs, tokens, or generated
+  values for this input.
+  EOT
   type = object({
     config_path            = optional(string)
     config_paths           = optional(list(string))
@@ -411,28 +416,6 @@ variable "project_description" {
   type        = string
   default     = "NWarila tenant project managed by Terraform."
   nullable    = false
-}
-
-variable "tenant_reconciler_role_template_id" {
-  description = "Existing Rancher role template ID for the tenant chart reconcile identity."
-  type        = string
-  nullable    = false
-
-  validation {
-    condition     = length(trimspace(var.tenant_reconciler_role_template_id)) > 0
-    error_message = "tenant_reconciler_role_template_id must not be empty."
-  }
-}
-
-variable "tenant_reconciler_principal" {
-  description = "User or group principal bound to the tenant reconcile role template."
-  type = object({
-    group_id           = optional(string)
-    group_principal_id = optional(string)
-    user_id            = optional(string)
-    user_principal_id  = optional(string)
-  })
-  nullable = false
 }
 
 variable "platform_resource_quota" {

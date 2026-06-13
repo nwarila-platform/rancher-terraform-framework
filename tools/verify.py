@@ -428,6 +428,38 @@ KIND_POLICY_DENIED_PROBES = {
     "ReplicaSet": "apps/v1",
 }
 
+IMAGE_POLICY_DIGEST = "sha256:" + ("1" * 64)
+IMAGE_POLICY_ALLOWED_IMAGE = f"ghcr.io/nwarila-platform/app@{IMAGE_POLICY_DIGEST}"
+IMAGE_POLICY_ALLOWED_TAG_DIGEST_IMAGE = (
+    f"ghcr.io/nwarila-platform/app:1.0.0@{IMAGE_POLICY_DIGEST}"
+)
+IMAGE_POLICY_PROBES = (
+    ("allows-ghcr-digest", IMAGE_POLICY_ALLOWED_IMAGE, "containers", True),
+    ("allows-ghcr-tag-digest", IMAGE_POLICY_ALLOWED_TAG_DIGEST_IMAGE, "containers", True),
+    (
+        "denies-ghcr-lookalike-org",
+        f"ghcr.io/nwarila-platform-evil/app@{IMAGE_POLICY_DIGEST}",
+        "containers",
+        False,
+    ),
+    (
+        "denies-ghcr-no-repository",
+        f"ghcr.io/nwarila-platform@{IMAGE_POLICY_DIGEST}",
+        "containers",
+        False,
+    ),
+    ("denies-ghcr-tag-only", "ghcr.io/nwarila-platform/app:latest", "containers", False),
+    (
+        "denies-foreign-registry",
+        f"registry.k8s.io/pause@{IMAGE_POLICY_DIGEST}",
+        "containers",
+        False,
+    ),
+    ("denies-bare-image", "nginx", "containers", False),
+    ("denies-init-container-image", "nginx", "initContainers", False),
+    ("denies-ephemeral-container-image", "nginx", "ephemeralContainers", False),
+)
+
 
 def write_kind_probe(tmpdir: Path, kind: str, api_version: str) -> Path:
     name = kind.lower()
@@ -444,6 +476,43 @@ def write_kind_probe(tmpdir: Path, kind: str, api_version: str) -> Path:
         ),
         encoding="utf-8",
     )
+    return path
+
+
+def write_image_probe(tmpdir: Path, name: str, image: str, field: str) -> Path:
+    path = tmpdir / f"image-probe-{name}.yaml"
+    lines = [
+        "apiVersion: v1",
+        "kind: Pod",
+        "metadata:",
+        f"  name: image-probe-{name}",
+        "spec:",
+        "  containers:",
+        "    - name: app",
+        f"      image: {IMAGE_POLICY_ALLOWED_IMAGE}",
+    ]
+    if field == "containers":
+        lines[-1] = f"      image: {image}"
+    elif field == "initContainers":
+        lines.extend(
+            [
+                "  initContainers:",
+                "    - name: init",
+                f"      image: {image}",
+            ]
+        )
+    elif field == "ephemeralContainers":
+        lines.extend(
+            [
+                "  ephemeralContainers:",
+                "    - name: debug",
+                f"      image: {image}",
+            ]
+        )
+    else:
+        raise SystemExit(f"unsupported image probe field: {field}")
+
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
 
 
@@ -491,7 +560,11 @@ def chart_policy() -> None:
             "tests/fixtures/charts/compliant",
             None,
             True,
-            ("kind: Deployment\n", "kind: Service\n"),
+            (
+                "kind: Deployment\n",
+                "kind: Service\n",
+                "ghcr.io/nwarila-platform/compliant-fixture@sha256:",
+            ),
             (),
         ),
         (
@@ -500,7 +573,12 @@ def chart_policy() -> None:
             "tests/fixtures/charts/compliant-statefulset",
             None,
             True,
-            ("kind: StatefulSet\n", "kind: Service\n", "clusterIP: None"),
+            (
+                "kind: StatefulSet\n",
+                "kind: Service\n",
+                "clusterIP: None",
+                "ghcr.io/nwarila-platform/compliant-statefulset-fixture@sha256:",
+            ),
             (),
         ),
         (
@@ -524,6 +602,7 @@ def chart_policy() -> None:
                 "kind: Secret\n",
                 "kind: Role\n",
                 "kind: RoleBinding\n",
+                "bad-registry.invalid/tenant/rootkit:latest",
             ),
             (
                 "enforce-restricted-pod-security",
@@ -535,6 +614,8 @@ def chart_policy() -> None:
                 "restrict-workload-object-kinds",
                 "Tenant charts may render only approved workload kinds",
                 "Secret, Role, RoleBinding",
+                "require-approved-image-registry-and-digest",
+                "Container images must come from an approved NWarila registry path",
             ),
         ),
     )
@@ -543,6 +624,20 @@ def chart_policy() -> None:
         tmpdir = Path(tmp)
         values_file = tmpdir / "platform-workload-all-hatches.yaml"
         values_file.write_text(PLATFORM_WORKLOAD_CONDITIONAL_VALUES, encoding="utf-8")
+
+        for name, image, field, expect_pass in IMAGE_POLICY_PROBES:
+            resource_file = write_image_probe(tmpdir, name, image, field)
+            run_kyverno_apply(
+                kyverno,
+                resource_file,
+                case=f"image-policy-{name}",
+                expect_pass=expect_pass,
+                policy_path="policies/kyverno/verify-images.yaml",
+                expected_failure_snippets=(
+                    "require-approved-image-registry-and-digest",
+                    "Container images must come from an approved NWarila registry path",
+                ),
+            )
 
         for kind, api_version in KIND_POLICY_ALLOWED_PROBES.items():
             resource_file = write_kind_probe(tmpdir, kind, api_version)

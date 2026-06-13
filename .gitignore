@@ -96,6 +96,7 @@
 !/policies/kyverno/deny-external-service-types.yaml
 !/policies/kyverno/require-resource-limits.yaml
 !/policies/kyverno/restrict-object-kinds.yaml
+!/policies/kyverno/verify-images.yaml
 
 !/charts/
 !/charts/platform-workload/

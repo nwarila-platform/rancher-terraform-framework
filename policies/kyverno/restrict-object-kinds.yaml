@@ -17,24 +17,28 @@ spec:
           - resources:
               kinds:
                 - ConfigMap
+                - CronJob
                 - Deployment
                 - HorizontalPodAutoscaler
                 - Ingress
+                - Job
                 - PersistentVolumeClaim
                 - PodDisruptionBudget
                 - Service
                 - ServiceAccount
+                - StatefulSet
                 - VaultStaticSecret
       validate:
         failureAction: Enforce
         message: >-
           Tenant charts may render only approved workload kinds: ConfigMap,
-          Deployment, HorizontalPodAutoscaler, Ingress, PersistentVolumeClaim,
-          PodDisruptionBudget, Service, ServiceAccount, and VaultStaticSecret.
+          CronJob, Deployment, HorizontalPodAutoscaler, Ingress, Job,
+          PersistentVolumeClaim, PodDisruptionBudget, Service, ServiceAccount,
+          StatefulSet, and VaultStaticSecret. DaemonSet, bare Pod, ReplicaSet,
           Secret, Role, RoleBinding, ClusterRole, ClusterRoleBinding,
-          CustomResourceDefinition, Namespace, ResourceQuota, LimitRange, and
-          NetworkPolicy are denied; use platform-owned controllers or
-          VaultStaticSecret where required.
+          CustomResourceDefinition, Namespace, ResourceQuota, LimitRange,
+          NetworkPolicy, and all other non-approved kinds are denied; use
+          platform-owned controllers or VaultStaticSecret where required.
         deny:
           conditions:
             all:

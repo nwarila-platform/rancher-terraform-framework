@@ -312,6 +312,13 @@ def chart_schema() -> None:
             ("kind: Deployment\n", "kind: Service\n"),
         ),
         (
+            "compliant-statefulset-fixture",
+            "compliant-statefulset-schema",
+            "tests/fixtures/charts/compliant-statefulset",
+            None,
+            ("kind: StatefulSet\n", "kind: Service\n", "clusterIP: None"),
+        ),
+        (
             "hostile-fixture",
             "hostile-schema",
             "tests/fixtures/charts/hostile",
@@ -364,12 +371,13 @@ def run_kyverno_apply(
     *,
     case: str,
     expect_pass: bool,
+    policy_path: str = "policies/kyverno",
     expected_failure_snippets: tuple[str, ...] = (),
 ) -> None:
     args = [
         *kyverno,
         "apply",
-        "policies/kyverno",
+        policy_path,
         "--resource",
         str(resource_file),
         "--detailed-results",
@@ -406,6 +414,37 @@ def run_kyverno_apply(
 
     print(f"chart-policy: {case} expected FAIL", flush=True)
     sys.stdout.write(output)
+
+
+KIND_POLICY_ALLOWED_PROBES = {
+    "StatefulSet": "apps/v1",
+    "Job": "batch/v1",
+    "CronJob": "batch/v1",
+}
+
+KIND_POLICY_DENIED_PROBES = {
+    "DaemonSet": "apps/v1",
+    "Pod": "v1",
+    "ReplicaSet": "apps/v1",
+}
+
+
+def write_kind_probe(tmpdir: Path, kind: str, api_version: str) -> Path:
+    name = kind.lower()
+    path = tmpdir / f"kind-probe-{name}.yaml"
+    path.write_text(
+        "\n".join(
+            (
+                f"apiVersion: {api_version}",
+                f"kind: {kind}",
+                "metadata:",
+                f"  name: kind-probe-{name}",
+                "",
+            )
+        ),
+        encoding="utf-8",
+    )
+    return path
 
 
 def chart_policy() -> None:
@@ -456,6 +495,15 @@ def chart_policy() -> None:
             (),
         ),
         (
+            "compliant-statefulset-fixture",
+            "compliant-statefulset-policy",
+            "tests/fixtures/charts/compliant-statefulset",
+            None,
+            True,
+            ("kind: StatefulSet\n", "kind: Service\n", "clusterIP: None"),
+            (),
+        ),
+        (
             "hostile-fixture",
             "hostile-policy",
             "tests/fixtures/charts/hostile",
@@ -495,6 +543,30 @@ def chart_policy() -> None:
         tmpdir = Path(tmp)
         values_file = tmpdir / "platform-workload-all-hatches.yaml"
         values_file.write_text(PLATFORM_WORKLOAD_CONDITIONAL_VALUES, encoding="utf-8")
+
+        for kind, api_version in KIND_POLICY_ALLOWED_PROBES.items():
+            resource_file = write_kind_probe(tmpdir, kind, api_version)
+            run_kyverno_apply(
+                kyverno,
+                resource_file,
+                case=f"kind-policy-allows-{kind}",
+                expect_pass=True,
+                policy_path="policies/kyverno/restrict-object-kinds.yaml",
+            )
+
+        for kind, api_version in KIND_POLICY_DENIED_PROBES.items():
+            resource_file = write_kind_probe(tmpdir, kind, api_version)
+            run_kyverno_apply(
+                kyverno,
+                resource_file,
+                case=f"kind-policy-denies-{kind}",
+                expect_pass=False,
+                policy_path="policies/kyverno/restrict-object-kinds.yaml",
+                expected_failure_snippets=(
+                    "restrict-workload-object-kinds",
+                    "Tenant charts may render only approved workload kinds",
+                ),
+            )
 
         for (
             case,

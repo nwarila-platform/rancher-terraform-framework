@@ -1,0 +1,23 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: nwarila-deny-external-service-types
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: restrict-service-types
+      match:
+        any:
+          - resources:
+              kinds:
+                - Service
+      validate:
+        failureAction: Enforce
+        message: >-
+          Services must use type ClusterIP or ExternalName. LoadBalancer and
+          NodePort services are exposed outside the namespace boundary and are
+          denied by the framework.
+        pattern:
+          spec:
+            =(type): ClusterIP|ExternalName

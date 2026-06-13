@@ -474,6 +474,8 @@ def chart_policy() -> None:
                 "enforce-restricted-pod-security",
                 "require-runtime-default-seccomp",
                 "require-read-only-root-filesystem",
+                "restrict-service-types",
+                "require-cpu-memory-limits",
             ),
         ),
     )

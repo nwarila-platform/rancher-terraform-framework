@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install pinned CI tools (actionlint, kubeconform, kyverno, tflint,
+# Install pinned CI tools (actionlint, helm, kubeconform, kyverno, tflint,
 # terraform-docs, opa) on a Linux x86_64 runner.
 #
 # Versions are passed via env vars so Renovate can update them in one place.
@@ -138,6 +138,28 @@ install_kubeconform() {
   "${bindir}/kubeconform" -v
 }
 
+install_helm() {
+  local v="$HELM_VERSION"
+  local tar="helm-v${v}-linux-amd64.tar.gz"
+  local base="https://get.helm.sh"
+
+  curl --fail --silent --show-error --location -o "${workdir}/${tar}" "${base}/${tar}"
+  curl --fail --silent --show-error --location -o "${workdir}/${tar}.sha256sum" "${base}/${tar}.sha256sum"
+
+  local expected
+  expected="$(awk '{print $1}' "${workdir}/${tar}.sha256sum")"
+  if [ -z "$expected" ]; then
+    echo "error: Helm sha256sum file is empty" >&2
+    exit 1
+  fi
+
+  verify_sha256 "${workdir}/${tar}" "$expected"
+  mkdir -p "${workdir}/helm"
+  tar -xzf "${workdir}/${tar}" -C "${workdir}/helm"
+  install -m 0755 "${workdir}/helm/linux-amd64/helm" "${bindir}/helm"
+  "${bindir}/helm" version --short
+}
+
 install_kyverno() {
   local v="$KYVERNO_VERSION"
   local tar="kyverno-cli_v${v}_linux_x86_64.tar.gz"
@@ -172,6 +194,7 @@ install_markdownlint_cli2() {
 }
 
 require_var ACTIONLINT_VERSION
+require_var HELM_VERSION
 require_var KUBECONFORM_VERSION
 require_var KYVERNO_VERSION
 require_var MARKDOWNLINT_CLI2_VERSION
@@ -191,6 +214,7 @@ workdir="$(mktemp -d)"
 trap 'rm -rf "$workdir"' EXIT
 
 install_actionlint
+install_helm
 install_kubeconform
 install_kyverno
 install_markdownlint_cli2

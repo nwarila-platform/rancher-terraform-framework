@@ -50,6 +50,13 @@ platform:
 Step = Callable[[], None]
 
 
+TERRAFORM_DOCS_TARGETS = (
+    (".terraform-docs.yml", "terraform"),
+    (".terraform-docs.envelope.yml", "terraform/modules/envelope"),
+    (".terraform-docs.deploy.yml", "terraform/modules/deploy"),
+)
+
+
 def run(args: list[str], *, input_text: str | None = None) -> None:
     print("+ " + " ".join(args), flush=True)
     try:
@@ -723,6 +730,14 @@ def build_steps(case: str) -> dict[str, Step]:
         run([PYTHON, "tools/check_privileged_workflows.py", "--repo-root", "."])
         run([PYTHON, "tools/run_privileged_workflow_tests.py"])
 
+    def terraform_docs(*, check: bool) -> None:
+        for config, module_path in TERRAFORM_DOCS_TARGETS:
+            args = ["terraform-docs", "--config", config]
+            if check:
+                args.append("--output-check")
+            args.append(module_path)
+            run(args)
+
     return {
         "fmt": lambda: run(["terraform", "-chdir=terraform", "fmt", "-recursive"]),
         "fmt-check": lambda: run(
@@ -758,16 +773,8 @@ def build_steps(case: str) -> dict[str, Step]:
             [PYTHON, "tools/check_baseline_manifest.py"]
         ),
         "lockfile-check": lockfile_check,
-        "docs": lambda: run(["terraform-docs", "--config", ".terraform-docs.yml", "terraform"]),
-        "docs-diff": lambda: run(
-            [
-                "terraform-docs",
-                "--config",
-                ".terraform-docs.yml",
-                "--output-check",
-                "terraform",
-            ]
-        ),
+        "docs": lambda: terraform_docs(check=False),
+        "docs-diff": lambda: terraform_docs(check=True),
         "docs-layout": lambda: run([PYTHON, "tools/check_docs_layout.py"]),
         "adr-schema": lambda: run([PYTHON, "tools/check_adr_schema.py"]),
         "integration": lambda: run(

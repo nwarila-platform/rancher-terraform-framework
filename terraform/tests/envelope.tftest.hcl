@@ -18,12 +18,8 @@ variables {
     token_key = "test-token-not-a-secret"
   }
 
-  cluster_id                         = "c-mock"
-  project_name                       = "tenant-project"
-  tenant_reconciler_role_template_id = "nwarila-tenant-reconciler"
-  tenant_reconciler_principal = {
-    group_principal_id = "local://tenant-reconcilers"
-  }
+  cluster_id   = "c-mock"
+  project_name = "tenant-project"
 
   all_workloads = [
     {
@@ -42,32 +38,27 @@ run "rancher_envelope_wires_project_namespace_and_psa" {
   command = plan
 
   assert {
-    condition     = rancher2_project.tenant.cluster_id == var.cluster_id
+    condition     = module.envelope.project_cluster_id == var.cluster_id
     error_message = "The Rancher project must target the requested downstream cluster."
   }
 
   assert {
-    condition     = rancher2_project.tenant.resource_quota[0].project_limit[0].limits_cpu == var.platform_resource_quota.project_limit.limits_cpu
+    condition     = module.envelope.project_limit_cpu == var.platform_resource_quota.project_limit.limits_cpu
     error_message = "The Rancher project quota must use the platform project CPU cap."
   }
 
   assert {
-    condition     = rancher2_namespace.workload["app"].project_id == "c-mock:p-mock"
+    condition     = module.envelope.namespace_project_ids["app"] == "c-mock:p-mock"
     error_message = "The namespace must be assigned to the framework-created Rancher project."
   }
 
   assert {
-    condition     = rancher2_namespace.workload["app"].labels["pod-security.kubernetes.io/enforce"] == "restricted"
+    condition     = module.envelope.namespace_labels["app"]["pod-security.kubernetes.io/enforce"] == "restricted"
     error_message = "The namespace must carry PSA Restricted enforce labels."
   }
 
   assert {
-    condition     = rancher2_project_role_template_binding.tenant_reconciler.role_template_id == var.tenant_reconciler_role_template_id
-    error_message = "The tenant reconciler binding must use the configured role template."
-  }
-
-  assert {
-    condition     = rancher2_project_role_template_binding.tenant_reconciler.group_principal_id == "local://tenant-reconcilers"
-    error_message = "The tenant reconciler binding must target the configured group principal."
+    condition     = module.envelope.reconcile_service_account_names["app"] == "nwarila-tenant-reconciler"
+    error_message = "The envelope must create the namespace-local restricted reconcile ServiceAccount."
   }
 }

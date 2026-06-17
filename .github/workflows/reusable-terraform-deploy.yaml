@@ -71,7 +71,7 @@ on:
           each runner can move forward independently with Renovate's help.
         required: false
         type: string
-        default: "1.15.4"
+        default: "1.15.6"
       apply:
         description: |
           When true, apply the saved Terraform plan after the

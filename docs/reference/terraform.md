@@ -19,7 +19,7 @@ Run `make docs` to regenerate; CI fails if this file is out of sync via
 
 | Name | Version |
 | ---- | ------- |
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | = 1.15.4 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | = 1.15.6 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | = 3.2.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | = 3.2.0 |
 | <a name="requirement_rancher2"></a> [rancher2](#requirement\_rancher2) | = 14.1.1 |

@@ -156,6 +156,8 @@ jobs:
         env:
           # renovate: datasource=github-releases depName=rhysd/actionlint
           ACTIONLINT_VERSION: "1.7.12"
+          # renovate: datasource=github-releases depName=helm/helm
+          HELM_VERSION: "4.2.1"
           # renovate: datasource=github-releases depName=yannh/kubeconform
           KUBECONFORM_VERSION: "0.8.0"
           # renovate: datasource=github-releases depName=kyverno/kyverno
@@ -204,6 +206,8 @@ jobs:
         env:
           # renovate: datasource=github-releases depName=rhysd/actionlint
           ACTIONLINT_VERSION: "1.7.12"
+          # renovate: datasource=github-releases depName=helm/helm
+          HELM_VERSION: "4.2.1"
           # renovate: datasource=github-releases depName=yannh/kubeconform
           KUBECONFORM_VERSION: "0.8.0"
           # renovate: datasource=github-releases depName=kyverno/kyverno

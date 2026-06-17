@@ -113,7 +113,7 @@ jobs:
         repos/public=>terraform/repos/public
         repos/private=>terraform/repos/private
       tfvars_file: terraform/repos/public/prod.tfvars
-      terraform_version: "1.15.4"
+      terraform_version: "1.15.6"
       backend_mode: s3
       apply: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     secrets:

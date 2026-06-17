@@ -5,7 +5,7 @@
 terraform {
 
   # Declare exact Terraform version used by CI.
-  required_version = "= 1.15.4"
+  required_version = "= 1.15.6"
 
   # Declare exact provider versions.
   required_providers {

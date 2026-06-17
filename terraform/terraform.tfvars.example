@@ -1,119 +1,26 @@
-rancher_config = {
-  api_url   = "https://rancher.example.invalid"
-  token_key = "REPLACE_WITH_CI_SECRET_OR_TF_VAR"
-  insecure  = false
-}
-
-scoped_deploy_kubernetes = {
-  # Temporary Step-27 seam. Step 28 mints this auth per deploy via Vault
-  # TokenRequest instead of reading a standing kubeconfig from disk.
-  config_path = "./.generated/scoped-reconcile-kubeconfig.yaml"
-}
-
-kubernetes_admin = {
-  config_path = "./.generated/platform-admin-kubeconfig.yaml"
-}
-
-cluster_id   = "c-example"
-project_name = "example-tenant"
+# Tenant-owned workload input only.
+# The platform deploy runner injects auth, identity, caps, quota, and backend
+# settings out-of-band with TF_VAR_* and -backend-config. Do not put Rancher
+# tokens, kubeconfigs, cluster IDs, project names, or backend credentials here.
+# Omitting chart_path uses the built-in charts/platform-workload chart.
 
 all_workloads = [
   {
-    key            = "web"
-    namespace_name = "example-web"
-    release_name   = "example-web"
-    chart_path     = "./chart"
+    key = "hello"
 
     ingress = {
-      host = "web.example.invalid"
-      path = "/"
+      host = "hello.example.invalid"
     }
 
-    replicas = 2
-
-    hpa = {
-      enabled                           = true
-      min_replicas                      = 2
-      max_replicas                      = 4
-      target_cpu_utilization_percentage = 70
-    }
-
-    resources = {
-      requests = {
-        cpu    = "100m"
-        memory = "128Mi"
-      }
-      limits = {
-        cpu    = "500m"
-        memory = "512Mi"
-      }
-    }
-
-    vault_secret_references = {
-      app_config = {
-        path   = "kv/data/tenants/example/web-config"
-        engine = "kv-v2"
-        templates = {
-          APP_CONFIG_PATH = "config.json"
-        }
-      }
-    }
-
-    # Escape hatch 1: allow one workload-specific service account token mount.
-    # Escape hatch 2: allow NET_BIND_SERVICE only.
-    escape_hatches = {
-      api_access_service_account_token = false
-      net_bind_service                 = false
-    }
-
-    # Escape hatch 3: enable only when persistent storage is required.
-    persistent_storage = {
-      size          = "5Gi"
-      storage_class = "standard"
-      mount_path    = "/data"
-    }
-
+    # ghcr.io/stefanprodan/podinfo:6.9.2 was verified as UID 100 and serving
+    # HTTP on port 9898 with a read-only root filesystem, no new privileges,
+    # and all Linux capabilities dropped. Mirror it under an approved NWarila
+    # registry path before production image-verification policy is enforced.
     values = {
-      workload = {
-        image = {
-          repository = "registry.example.invalid/example/web"
-          digest     = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
-        }
-      }
-    }
-  },
-  {
-    key            = "worker"
-    namespace_name = "example-worker"
-    release_name   = "example-worker"
-
-    ingress = {
-      host = "worker.example.invalid"
-      path = "/jobs"
-    }
-
-    replicas = 1
-
-    resources = {
-      requests = {
-        cpu    = "100m"
-        memory = "128Mi"
-      }
-      limits = {
-        cpu    = "500m"
-        memory = "512Mi"
-      }
-    }
-
-    vault_secret_references = {}
-    escape_hatches          = {}
-
-    values = {
-      workload = {
-        image = {
-          repository = "registry.example.invalid/example/worker"
-          digest     = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
-        }
+      containerPort = 9898
+      image = {
+        repository = "ghcr.io/stefanprodan/podinfo"
+        digest     = "sha256:cab90e04829cdae73199a8402882a4e3ccaf251b8a0d50bdefede0ab3f6371e7"
       }
     }
   }

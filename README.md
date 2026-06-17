@@ -1,9 +1,11 @@
 # rancher-terraform-framework
 
 Reusable Rancher PaaS framework for NWarila-hosted Kubernetes. A tenant
-repository derives from `deploy-tenant-template`, keeps in-repo Helm chart
-source plus one `terraform.tfvars`, and uses `all_workloads` to define one or
-more workload releases that can pass the platform security baseline. This
+repository derives from `deploy-tenant-template`, can use the built-in
+`platform-workload` chart from one `terraform.tfvars` file or opt into a
+tenant-owned chart with explicit `chart_path`, and uses `all_workloads` to
+define one or more workload releases that can pass the platform security
+baseline. This
 repository is the framework source, not a deployment root: it will provide a
 platform-run envelope module for the Rancher tenant project, per-workload
 namespaces, quota, PSA labels, and restricted reconcile identity, plus a
@@ -50,3 +52,4 @@ long-lived external credentials.
 - [ADR-repo/0007](docs/decision-records/repo/0007-adopt-packer-limited-hcl-style.md) adopts the packer-limited HCL style for future Terraform implementation work.
 - [ADR-repo/0008](docs/decision-records/repo/0008-retire-static-terraform-plan-opa.md) retires static OPA-on-plan for this Rancher framework.
 - [ADR-repo/0009](docs/decision-records/repo/0009-split-platform-envelope-from-tenant-deploy-and-scope-the-reconcile-identity.md) splits platform envelope from tenant deploy and scopes the reconcile identity.
+- [ADR-repo/0010](docs/decision-records/repo/0010-default-to-built-in-platform-workload-chart.md) makes the built-in chart the default while preserving explicit tenant-owned chart paths.

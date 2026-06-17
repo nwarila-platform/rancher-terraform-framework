@@ -87,8 +87,16 @@ run "all_workloads_fan_out_namespaces_and_releases" {
   }
 
   assert {
-    condition     = endswith(module.deploy.chart_paths["web"], "/chart")
-    error_message = "A workload without chart_path must default to the root module chart path."
+    condition     = module.deploy.chart_paths["api"] == "./charts/api"
+    error_message = "An explicit chart_path must override the built-in chart default."
+  }
+
+  assert {
+    condition = (
+      endswith(replace(module.deploy.chart_paths["web"], "\\", "/"), "/charts/platform-workload") &&
+      fileexists(format("%s/Chart.yaml", module.deploy.chart_paths["web"]))
+    )
+    error_message = "A workload without chart_path must default to the built-in platform-workload chart."
   }
 
   assert {

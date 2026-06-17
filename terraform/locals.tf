@@ -58,7 +58,7 @@ locals {
     for workload in var.all_workloads : workload.key => merge(workload, {
       namespace_name = coalesce(workload.namespace_name, workload.key)
       release_name   = coalesce(workload.release_name, workload.key)
-      chart_path     = coalesce(workload.chart_path, "${path.root}/chart")
+      chart_path     = coalesce(workload.chart_path, abspath("${path.root}/../charts/platform-workload"))
       helm_values = [
         yamlencode(
           merge(

@@ -321,7 +321,10 @@ variable "platform_caps" {
 
 # Define Provider Configuration Options.
 variable "rancher_config" {
-  description = "Rancher API configuration. Provide values via tfvars or TF_VAR_rancher_config; never commit real tokens."
+  description = <<-EOT
+  Platform-injected Rancher API configuration. Provide via TF_VAR_rancher_config;
+  never set in tenant terraform.tfvars or commit real tokens.
+  EOT
   type = object({
     api_url   = string
     token_key = string

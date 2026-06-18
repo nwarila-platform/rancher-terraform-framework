@@ -219,6 +219,10 @@ None.
   workload. Tenant-owned charts remain supported through explicit `chart_path`,
   but the built-in `platform-workload` chart is now the default when
   `chart_path` is omitted.
+- [ADR-repo/0012](0012-use-terraform-native-workload-resources.md)
+  for tenant-owned chart, chart-path, and chart-values clauses only. This ADR's
+  one expected tfvars file, constrained tenant surface, no-raw-secret posture,
+  and escape-hatch limits remain current.
 
 ## Implementing PRs
 

@@ -6,6 +6,7 @@
 - **Terraform and provider versions are exact pins.** `terraform/versions.tf` uses `= X.Y.Z` for the CLI and every provider.
 - **Workflow `uses:` references are SHA-pinned.** Local `./...` reusable calls and digest-pinned docker images are allowed.
 - **Rancher envelope invariants are covered by Terraform validation and tests.** `terraform test` asserts project, namespace, PSA label, quota, Helm namespace, CRD-skip, and multi-workload fan-out behavior; `make opa-plan` is a documented compatibility no-op per ADR-repo/0008.
+- **Tenant tfvars is an untrusted source boundary.** Only `all_workloads` is honored as the tenant-supplied Terraform variable surface; platform auth, identity, caps, quota, and backend settings are injected out of band by the consuming runner, because Terraform cannot enforce variable source.
 - **The reference framework remains credential-free.** Synthetic providers are used so tests and integration run without cloud accounts, secrets, or recurring cost.
 - **Generated Terraform docs are checked, not trusted.** `docs/reference/terraform.md` must match `terraform-docs` output.
 - **Template-tier baseline entries must declare propagation semantics.** `baseline-manifest.json` is load-bearing for derivative framework drift gates. `byte_identical` entries are mirrored exactly; `scaffold_starter` entries are starter material that derivatives rewrite for their provider surface.

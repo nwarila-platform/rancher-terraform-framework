@@ -58,6 +58,22 @@ destinations outside the allowlist, missing sources, and symlinks.
 argument used by `terraform plan` and `terraform apply`. Absolute paths and
 `..` traversal segments are rejected.
 
+For this Rancher framework, the tenant tfvars file is untrusted input. A
+conforming runner MUST admit only the ADR-repo/0003 and ADR-repo/0006 tenant
+variable surface before `terraform plan`: the only tenant-supplied top-level
+Terraform variable is `all_workloads`. Platform-owned or unknown top-level keys
+MUST be rejected before Terraform runs.
+
+The runner injects provider authentication, cluster/project identity, platform
+caps, platform quota, and backend configuration out of band. Auth values are
+supplied through runner-owned `TF_VAR_*` inputs, not tenant tfvars. Non-secret
+platform envelope values may be supplied through a runner-owned var file placed
+after the tenant var file in Terraform CLI argument order, so the platform value
+wins precedence. Backend settings come from backend config or equivalent
+initialization inputs. This is a source-admission requirement owned by the
+runner; Terraform `validation {}` checks final values, not where they came
+from. See [ADR-repo/0011](../decision-records/repo/0011-treat-tenant-tfvars-as-untrusted-input.md).
+
 ## Backend Selection
 
 `backend_mode` is `local` or `s3`. `local` keeps PR validation

@@ -56,3 +56,4 @@ the org drift gate.
 | [ADR-repo/0008](repo/0008-retire-static-terraform-plan-opa.md) | Accepted | Retire static OPA-on-plan for this Rancher framework. |
 | [ADR-repo/0009](repo/0009-split-platform-envelope-from-tenant-deploy-and-scope-the-reconcile-identity.md) | Accepted | Split the platform envelope module from tenant deploy and scope the reconcile identity. |
 | [ADR-repo/0010](repo/0010-default-to-built-in-platform-workload-chart.md) | Accepted | Default omitted `chart_path` to the built-in platform workload chart. |
+| [ADR-repo/0011](repo/0011-treat-tenant-tfvars-as-untrusted-input.md) | Accepted | Treat tenant tfvars as untrusted input and require runner-side source admission. |

@@ -18,7 +18,7 @@ What this document does NOT cover:
 
 ## Trust boundaries
 
-Six boundaries cross the framework pattern, each one a candidate for compromise or accidental disclosure:
+Seven boundaries cross the framework pattern, each one a candidate for compromise or accidental disclosure:
 
 1. **Author → Repository.** The framework author commits HCL into the repo. Trust depends on the author's GitHub credentials, their commit signing posture, and branch protection on `main`.
 2. **Repository → CI runner.** Self-CI checks out the repo onto a GitHub-hosted runner. Trust depends on GitHub's runner-image integrity and GitHub Actions' permission model.
@@ -26,6 +26,8 @@ Six boundaries cross the framework pattern, each one a candidate for compromise 
 4. **CI runner → State backend.** `terraform apply` writes state. For the do-nothing reference framework, state is local in the test sandbox and never leaves the runner. For a derivative framework, state goes to the remote backend selected by that framework or its consuming runner. Trust depends on the backend service, the encryption configuration, and the IAM/auth path used to reach it.
 5. **CI runner → Cloud APIs.** A real framework's `terraform apply` calls the cloud provider's API to create resources. Trust depends on the API's authentication path, the temporary credentials' scope, and the API itself.
 6. **Framework → Consumer (template-tier composition).** A runner consumer overlays its `repos/` data onto this framework's `terraform/` tree at validation time. The overlay can change what the framework sees on disk. Trust depends on the runner's contribution discipline (it controls the data) and the overlay mechanism (it controls how data lands in the framework tree).
+
+7. **Tenant tfvars to Platform runner.** For this Rancher framework, the tenant `terraform.tfvars` file is untrusted input crossing into the platform deploy path. Trust depends on the consuming runner admitting only the tenant variable surface (`all_workloads`) and injecting platform-owned provider auth, identity, caps, quota, and backend settings out of band before Terraform plan.
 
 ## Threats by category
 
@@ -64,6 +66,7 @@ Six boundaries cross the framework pattern, each one a candidate for compromise 
 - **Privilege escalation via overlay-injected workflow.** If the overlay mechanism allowed writing to `.github/workflows/`, an attacker controlling runner data could inject a workflow that runs with the framework's permissions. Mitigation: the overlay is constrained to `terraform/repos/` and `terraform/fixtures/runtime/` within the framework tree. The runner contract's `overlay_paths` input requires explicit `<src>=><dst>` pairs; there's no glob or recursive copy that would land in `.github/`. Defense-in-depth: workflows run with `permissions: contents: read` by default in this template; even a successful injection couldn't push code or write protected refs without explicit permission grants.
 - **OIDC role over-permission.** A derivative framework's cloud role assumed via OIDC could be over-scoped, granting more permissions than the framework needs. Mitigation: the trust policy SHOULD scope to specific repository, branch, environment, and event claims where the cloud provider supports them. The role policy SHOULD use least-privilege grants to specific resources, not wildcards. This is a per-framework concern; this template does not define a cloud role.
 - **Cross-job credential reuse.** GitHub Actions' OIDC tokens are scoped per-job. A misconfigured workflow that passes credentials between jobs could expand the trust radius. Mitigation: this template's workflows obtain fresh OIDC tokens per job; no cross-job credential passing.
+- **Tenant-tfvars variable shadowing.** A tenant tfvars file passed with a CLI `-var-file` can outrank platform values injected via `TF_VAR_*`. If the runner accepts platform-owned top-level keys, a tenant could redirect provider authentication, raise caps or quota, or reassign cluster/project placement and identity. Mitigation: the consuming runner MUST reject platform-owned and unknown top-level tfvars keys before `terraform plan`, honor only `all_workloads` as the tenant variable surface, and inject auth, identity, caps, quota, and backend configuration out of band.
 
 ## Out of scope (and why)
 

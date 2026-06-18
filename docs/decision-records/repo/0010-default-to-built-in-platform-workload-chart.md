@@ -176,7 +176,9 @@ default for simple workloads, and tenant-owned charts are supported by explicit
 
 ## Superseded by
 
-None (current).
+- [ADR-repo/0012](0012-use-terraform-native-workload-resources.md) supersedes
+  this ADR in full. The built-in chart default is retired by the target
+  Terraform-native deploy model.
 
 ## Implementing PRs
 

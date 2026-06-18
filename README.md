@@ -54,3 +54,4 @@ long-lived external credentials.
 - [ADR-repo/0009](docs/decision-records/repo/0009-split-platform-envelope-from-tenant-deploy-and-scope-the-reconcile-identity.md) splits platform envelope from tenant deploy and scopes the reconcile identity.
 - [ADR-repo/0010](docs/decision-records/repo/0010-default-to-built-in-platform-workload-chart.md) makes the built-in chart the default while preserving explicit tenant-owned chart paths.
 - [ADR-repo/0011](docs/decision-records/repo/0011-treat-tenant-tfvars-as-untrusted-input.md) treats tenant tfvars as untrusted input and requires runner-side source admission.
+- [ADR-repo/0012](docs/decision-records/repo/0012-use-terraform-native-workload-resources.md) replaces Helm/chart workload delivery with Terraform-native Kubernetes resources and Terraform-rendered Layer 1 manifests.

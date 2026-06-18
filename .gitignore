@@ -93,6 +93,7 @@
 !/docs/decision-records/repo/0009-split-platform-envelope-from-tenant-deploy-and-scope-the-reconcile-identity.md
 !/docs/decision-records/repo/0010-default-to-built-in-platform-workload-chart.md
 !/docs/decision-records/repo/0011-treat-tenant-tfvars-as-untrusted-input.md
+!/docs/decision-records/repo/0012-use-terraform-native-workload-resources.md
 
 !/policies/
 !/policies/opa/

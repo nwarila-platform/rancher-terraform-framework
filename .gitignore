@@ -36,6 +36,7 @@
 !/.github/workflows/reusable-terraform-deploy.yaml
 !/.github/workflows/security.yaml
 !/.github/workflows/template-sync.yaml
+!/.github/workflows/template-drift.yaml
 
 !/docs/
 !/docs/README.md

@@ -241,6 +241,10 @@ ADR-repo/0008 supersedes this ADR's earlier expectation that static OPA-on-plan
 would remain part of the Rancher envelope feedback loop. The tenant-render and
 admission security boundary remains current.
 
+ADR-repo/0012 supersedes this ADR's Helm-based `helm template` Layer 1
+mechanism only. The two-layer model remains current with a Terraform-rendered
+manifest Layer 1 gate plus authoritative runtime admission.
+
 ## Implementing PRs
 
 - The Step 1 architecture-lock pull request introduces this ADR. Later PRs for

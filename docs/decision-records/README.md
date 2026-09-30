@@ -57,3 +57,4 @@ the org drift gate.
 | [ADR-repo/0009](repo/0009-split-platform-envelope-from-tenant-deploy-and-scope-the-reconcile-identity.md) | Accepted | Split the platform envelope module from tenant deploy and scope the reconcile identity. |
 | [ADR-repo/0010](repo/0010-default-to-built-in-platform-workload-chart.md) | Accepted | Default omitted `chart_path` to the built-in platform workload chart. |
 | [ADR-repo/0011](repo/0011-treat-tenant-tfvars-as-untrusted-input.md) | Accepted | Treat tenant tfvars as untrusted input and require runner-side source admission. |
+| [ADR-repo/0012](repo/0012-use-terraform-native-workload-resources.md) | Accepted | Replace Helm and chart workload delivery with Terraform-native Kubernetes resources and Terraform-rendered Layer 1 manifests. |

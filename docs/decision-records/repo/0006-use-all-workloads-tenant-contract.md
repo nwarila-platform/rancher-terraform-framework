@@ -198,7 +198,10 @@ Future validation must enforce these new invariants:
 
 ## Superseded by
 
-None (current).
+- [ADR-repo/0012](0012-use-terraform-native-workload-resources.md) for the
+  per-entry Helm release and local chart path clauses only. This ADR's
+  `all_workloads` list, one tenant project, per-workload namespace model, and
+  uniqueness/caps validation requirements remain current.
 
 ## Implementing PRs
 
